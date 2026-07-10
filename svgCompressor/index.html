@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SVG 压缩</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+    }
+    .card {
+      background: #fff;
+      width: 92%;
+      max-width: 760px;
+      padding: 28px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+    h1 { margin: 0 0 6px; font-size: 22px; text-align: center; }
+    .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 20px; }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      background: #667eea;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:hover { background: #5568d3; }
+    button:active { transform: scale(0.98); }
+    button.secondary { background: #f0f2f5; color: #555; }
+    button.secondary:hover { background: #e2e5e9; }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .info-item {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      background: #f7f8fa;
+      border-radius: 10px;
+    }
+    .info-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+    .info-value { font-size: 14px; font-weight: 600; color: #333; }
+    .editors { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field { display: flex; flex-direction: column; }
+    label { font-size: 12px; color: #666; margin-bottom: 6px; font-weight: 600; }
+    textarea {
+      width: 100%;
+      flex: 1;
+      min-height: 220px;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 12px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      resize: vertical;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15); }
+    .error-msg { color: #e74c3c; font-size: 12px; min-height: 18px; margin-top: 6px; }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    @media (max-width: 720px) {
+      .editors { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>SVG 压缩</h1>
+    <p class="subtitle">粘贴 SVG 代码，去除多余空白和注释</p>
+
+    <div class="toolbar">
+      <button id="compressBtn" type="button">压缩</button>
+      <button id="copyBtn" type="button" class="secondary">复制结果</button>
+      <button id="clearBtn" type="button" class="secondary">清空</button>
+    </div>
+
+    <div class="info-row">
+      <div class="info-item">
+        <div class="info-label">原始大小</div>
+        <div class="info-value" id="originalSize">-</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">压缩后大小</div>
+        <div class="info-value" id="compressedSize">-</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">压缩率</div>
+        <div class="info-value" id="compressRatio">-</div>
+      </div>
+    </div>
+
+    <div class="editors">
+      <div class="field">
+        <label for="input">原始 SVG</label>
+        <textarea id="input" placeholder="<svg xmlns='http://www.w3.org/2000/svg'...></svg>"></textarea>
+      </div>
+      <div class="field">
+        <label for="output">压缩后 SVG</label>
+        <textarea id="output" readonly placeholder="压缩后的 SVG 将显示在这里"></textarea>
+        <div class="error-msg" id="errorMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+    const originalSize = document.getElementById('originalSize');
+    const compressedSize = document.getElementById('compressedSize');
+    const compressRatio = document.getElementById('compressRatio');
+    const errorMsg = document.getElementById('errorMsg');
+    const toast = document.getElementById('toast');
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function setError(msg) {
+      errorMsg.textContent = msg;
+    }
+
+    function formatSize(bytes) {
+      if (bytes === 0) return '0 B';
+      const units = ['B', 'KB', 'MB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(1024));
+      return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 2) + ' ' + units[i];
+    }
+
+    function compressSvg(svg) {
+      let s = svg.trim();
+      // 移除注释
+      s = s.replace(/<!--[\s\S]*?-->/g, '');
+      // 移除 XML 声明
+      s = s.replace(/<\?xml[^?]*\?>/g, '');
+      // 移除 DOCTYPE
+      s = s.replace(/<!DOCTYPE[^>]*>/gi, '');
+      // 标签之间只保留一个空格
+      s = s.replace(/>\s+</g, '> <');
+      // 移除标签内多余空白
+      s = s.replace(/\s{2,}/g, ' ');
+      // 移除标签首尾空白
+      s = s.replace(/\s>/g, '>');
+      s = s.replace(/\s\//g, '/');
+      // 移除属性值中不必要的空格
+      s = s.replace(/\s+=\s+/g, '=');
+      return s.trim();
+    }
+
+    function compress() {
+      setError('');
+      const raw = input.value.trim();
+      if (!raw) {
+        output.value = '';
+        originalSize.textContent = '-';
+        compressedSize.textContent = '-';
+        compressRatio.textContent = '-';
+        return;
+      }
+
+      if (!raw.toLowerCase().startsWith('<svg')) {
+        setError('请输入有效的 SVG 代码');
+        output.value = '';
+        return;
+      }
+
+      try {
+        const compressed = compressSvg(raw);
+        output.value = compressed;
+        const originalBytes = new Blob([raw]).size;
+        const compressedBytes = new Blob([compressed]).size;
+        originalSize.textContent = formatSize(originalBytes);
+        compressedSize.textContent = formatSize(compressedBytes);
+        const ratio = originalBytes > 0 ? ((1 - compressedBytes / originalBytes) * 100).toFixed(1) : 0;
+        compressRatio.textContent = ratio + '%';
+      } catch (err) {
+        setError('压缩失败：' + err.message);
+      }
+    }
+
+    document.getElementById('compressBtn').addEventListener('click', compress);
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      input.value = '';
+      output.value = '';
+      originalSize.textContent = '-';
+      compressedSize.textContent = '-';
+      compressRatio.textContent = '-';
+      setError('');
+      input.focus();
+    });
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      if (!output.value) return;
+      try {
+        await navigator.clipboard.writeText(output.value);
+        showToast('已复制到剪贴板');
+      } catch (err) {
+        output.select();
+        document.execCommand('copy');
+        showToast('已复制到剪贴板');
+      }
+    });
+  </script>
+</body>
+</html>

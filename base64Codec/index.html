@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Base64 编解码</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+    }
+    .card {
+      background: #fff;
+      width: 92%;
+      max-width: 680px;
+      padding: 28px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+    h1 { margin: 0 0 6px; font-size: 22px; text-align: center; }
+    .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 20px; }
+    .mode-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .mode-row label {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .mode-row input { display: none; }
+    .mode-row input:checked + label {
+      border-color: #667eea;
+      background: #f0f3ff;
+      color: #667eea;
+    }
+    .field { margin-bottom: 16px; }
+    label { display: block; font-size: 12px; color: #666; margin-bottom: 6px; font-weight: 600; }
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      resize: vertical;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15); }
+    .actions { display: flex; gap: 10px; margin-bottom: 16px; }
+    button {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 10px;
+      background: #667eea;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:hover { background: #5568d3; }
+    button:active { transform: scale(0.98); }
+    button.secondary { background: #f0f2f5; color: #555; }
+    button.secondary:hover { background: #e2e5e9; }
+    .error-msg { color: #e74c3c; font-size: 12px; min-height: 18px; }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Base64 编解码</h1>
+    <p class="subtitle">在普通文本与 Base64 之间转换</p>
+
+    <div class="mode-row">
+      <input id="modeEncode" type="radio" name="mode" value="encode" checked />
+      <label for="modeEncode">文本 → Base64</label>
+      <input id="modeDecode" type="radio" name="mode" value="decode" />
+      <label for="modeDecode">Base64 → 文本</label>
+    </div>
+
+    <div class="field">
+      <label for="input" id="inputLabel">输入文本</label>
+      <textarea id="input" placeholder="输入要编码的文本"></textarea>
+    </div>
+
+    <div class="actions">
+      <button id="convertBtn" type="button">转换</button>
+      <button id="copyBtn" type="button" class="secondary">复制结果</button>
+      <button id="clearBtn" type="button" class="secondary">清空</button>
+    </div>
+
+    <div class="field">
+      <label for="output" id="outputLabel">结果</label>
+      <textarea id="output" readonly placeholder="转换结果将显示在这里"></textarea>
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+    const inputLabel = document.getElementById('inputLabel');
+    const outputLabel = document.getElementById('outputLabel');
+    const errorMsg = document.getElementById('errorMsg');
+    const toast = document.getElementById('toast');
+    const modeInputs = document.querySelectorAll('input[name="mode"]');
+
+    let mode = 'encode';
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function setError(msg) {
+      errorMsg.textContent = msg;
+    }
+
+    function updateLabels() {
+      if (mode === 'encode') {
+        inputLabel.textContent = '输入文本';
+        input.placeholder = '输入要编码的文本';
+        outputLabel.textContent = 'Base64 结果';
+      } else {
+        inputLabel.textContent = '输入 Base64';
+        input.placeholder = '输入要解码的 Base64';
+        outputLabel.textContent = '解码结果';
+      }
+    }
+
+    function convert() {
+      setError('');
+      const text = input.value;
+      if (!text) {
+        output.value = '';
+        return;
+      }
+      try {
+        if (mode === 'encode') {
+          output.value = btoa(unescape(encodeURIComponent(text)));
+        } else {
+          output.value = decodeURIComponent(escape(atob(text)));
+        }
+      } catch (err) {
+        output.value = '';
+        setError(mode === 'encode' ? '编码失败' : '解码失败：请检查是否为有效的 Base64');
+      }
+    }
+
+    modeInputs.forEach(radio => {
+      radio.addEventListener('change', () => {
+        mode = document.querySelector('input[name="mode"]:checked').value;
+        updateLabels();
+        output.value = '';
+        setError('');
+      });
+    });
+
+    document.getElementById('convertBtn').addEventListener('click', convert);
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      input.value = '';
+      output.value = '';
+      setError('');
+      input.focus();
+    });
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      if (!output.value) return;
+      try {
+        await navigator.clipboard.writeText(output.value);
+        showToast('已复制到剪贴板');
+      } catch (err) {
+        output.select();
+        document.execCommand('copy');
+        showToast('已复制到剪贴板');
+      }
+    });
+  </script>
+</body>
+</html>

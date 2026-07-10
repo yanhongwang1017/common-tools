@@ -12,8 +12,18 @@
 │   └── index.html          # RGB 转 Hex 颜色转换器
 ├── imageCompressor/
 │   └── index.html          # 图片压缩工具
-└── urlCodec/
-    └── index.html          # URL 编码/解码工具
+├── urlCodec/
+│   └── index.html          # URL 编码/解码工具
+├── jsonFormatter/
+│   └── index.html          # JSON 格式化/压缩工具
+├── base64Codec/
+│   └── index.html          # Base64 编码/解码工具
+├── gradientGenerator/
+│   └── index.html          # CSS 渐变背景生成器
+├── shadowGenerator/
+│   └── index.html          # CSS 阴影生成器
+└── svgCompressor/
+    └── index.html          # SVG 压缩工具
 ```
 
 ## 使用方法
@@ -53,6 +63,47 @@
 - 支持一键编码和解码。
 - 支持复制结果。
 - 支持将结果转回输入框，方便连续操作。
+
+### 4. JSON 格式化
+
+格式化或压缩 JSON 字符串。
+
+- 支持 2 空格、4 空格、Tab 缩进。
+- 支持一键压缩为一行。
+- 自动检测 JSON 语法错误并提示。
+
+### 5. Base64 编解码
+
+在普通文本与 Base64 之间转换。
+
+- 支持文本编码为 Base64。
+- 支持 Base64 解码为文本。
+- 支持复制结果。
+
+### 6. 渐变背景生成器
+
+生成 CSS 渐变背景代码。
+
+- 支持线性渐变和径向渐变。
+- 可调整角度、起始颜色、结束颜色。
+- 实时预览并生成 CSS 代码。
+- 支持随机颜色和复制 CSS。
+
+### 7. 阴影生成器
+
+生成 CSS `box-shadow` 代码。
+
+- 可调节水平/垂直偏移、模糊半径、扩散半径。
+- 支持自定义阴影颜色和透明度。
+- 实时预览并复制 CSS。
+
+### 8. SVG 压缩
+
+压缩 SVG 代码，减小文件体积。
+
+- 移除注释、换行和多余空白。
+- 显示原始大小、压缩后大小和压缩率。
+- 支持复制压缩后的 SVG。
 
 ## 如何新增工具
 
