@@ -69,6 +69,50 @@
     textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15); }
     textarea.error { border-color: #e74c3c; background: #fdf2f2; }
     .error-msg { color: #e74c3c; font-size: 12px; min-height: 18px; margin-top: 6px; }
+    .json-tree {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      background: #fff;
+      user-select: text;
+    }
+    .json-node { margin-left: 18px; }
+    .json-line { display: flex; align-items: flex-start; line-height: 1.6; }
+    .json-key { color: #0066cc; margin-right: 6px; }
+    .json-string { color: #0d6b3e; }
+    .json-number { color: #d73a49; }
+    .json-boolean { color: #005cc5; font-weight: 600; }
+    .json-null { color: #6f42c1; font-weight: 600; }
+    .json-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+      border: none;
+      background: #f0f2f5;
+      color: #555;
+      border-radius: 4px;
+      font-size: 11px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .json-toggle:hover { background: #e2e5e9; }
+    .json-bracket { color: #555; }
+    .json-preview { color: #888; margin-left: 4px; }
+    .json-comma { color: #555; }
+    .collapsed .json-children { display: none; }
+    .collapsed .json-toggle::before { content: '+'; }
+    .json-toggle::before { content: '−'; }
+    .json-empty { color: #888; }
     @media (max-width: 720px) {
       .editors { grid-template-columns: 1fr; }
     }
@@ -113,8 +157,8 @@
         <div class="error-msg"></div>
       </div>
       <div class="field">
-        <label for="output">结果</label>
-        <textarea id="output" readonly placeholder="格式化后的 JSON 将显示在这里"></textarea>
+        <label>结果</label>
+        <div id="output" class="json-tree" placeholder="格式化后的 JSON 将显示在这里"></div>
         <div class="error-msg" id="errorMsg"></div>
       </div>
     </div>
@@ -129,6 +173,8 @@
     const errorMsg = document.getElementById('errorMsg');
     const toast = document.getElementById('toast');
 
+    let formattedText = '';
+
     function showToast(msg) {
       toast.textContent = msg;
       toast.classList.add('show');
@@ -140,18 +186,198 @@
       input.classList.toggle('error', !!msg);
     }
 
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function preview(value) {
+      if (value === null) return 'null';
+      if (typeof value === 'boolean') return String(value);
+      if (typeof value === 'number') return String(value);
+      if (typeof value === 'string') return `"${value.length > 20 ? value.slice(0, 20) + '…' : value}"`;
+      if (Array.isArray(value)) return `Array(${value.length})`;
+      return `Object(${Object.keys(value).length})`;
+    }
+
+    function appendComma(container) {
+      const comma = document.createElement('span');
+      comma.className = 'json-comma';
+      comma.textContent = ',';
+      container.appendChild(comma);
+    }
+
+    function renderNode(value, key) {
+      const node = document.createElement('div');
+      node.className = 'json-node';
+
+      const isObject = value !== null && typeof value === 'object';
+      const open = Array.isArray(value) ? '[' : '{';
+      const close = Array.isArray(value) ? ']' : '}';
+
+      const line = document.createElement('div');
+      line.className = 'json-line';
+
+      if (isObject) {
+        const hasChildren = Array.isArray(value) ? value.length > 0 : Object.keys(value).length > 0;
+        if (hasChildren) {
+          const toggle = document.createElement('button');
+          toggle.type = 'button';
+          toggle.className = 'json-toggle';
+          toggle.addEventListener('click', () => node.classList.toggle('collapsed'));
+          line.appendChild(toggle);
+        }
+      }
+
+      if (key !== undefined) {
+        const keySpan = document.createElement('span');
+        keySpan.className = 'json-key';
+        keySpan.textContent = `"${key}": `;
+        line.appendChild(keySpan);
+      }
+
+      if (isObject) {
+        const openSpan = document.createElement('span');
+        openSpan.className = 'json-bracket';
+        openSpan.textContent = open;
+        line.appendChild(openSpan);
+
+        if (Array.isArray(value) ? value.length === 0 : Object.keys(value).length === 0) {
+          const closeSpan = document.createElement('span');
+          closeSpan.className = 'json-bracket';
+          closeSpan.textContent = close;
+          line.appendChild(closeSpan);
+          node.appendChild(line);
+          return node;
+        }
+
+        const children = document.createElement('div');
+        children.className = 'json-children';
+
+        if (Array.isArray(value)) {
+          value.forEach((item, index) => {
+            const child = renderNode(item, undefined);
+            children.appendChild(child);
+            if (index < value.length - 1) appendComma(child);
+          });
+        } else {
+          const keys = Object.keys(value);
+          keys.forEach((k, index) => {
+            const child = renderNode(value[k], k);
+            children.appendChild(child);
+            if (index < keys.length - 1) appendComma(child);
+          });
+        }
+
+        const closeLine = document.createElement('div');
+        closeLine.className = 'json-line';
+        const closeSpan = document.createElement('span');
+        closeSpan.className = 'json-bracket';
+        closeSpan.textContent = close;
+        closeLine.appendChild(closeSpan);
+
+        node.appendChild(line);
+        node.appendChild(children);
+        node.appendChild(closeLine);
+      } else {
+        const valSpan = document.createElement('span');
+        if (value === null) valSpan.className = 'json-null';
+        else if (typeof value === 'boolean') valSpan.className = 'json-boolean';
+        else if (typeof value === 'number') valSpan.className = 'json-number';
+        else valSpan.className = 'json-string';
+        valSpan.textContent = value === null ? 'null' : (typeof value === 'string' ? `"${escapeHtml(value)}"` : String(value));
+        line.appendChild(valSpan);
+        node.appendChild(line);
+      }
+
+      return node;
+    }
+
+    function renderTree(data) {
+      output.innerHTML = '';
+      if (data === null || typeof data !== 'object') {
+        output.appendChild(renderNode(data));
+        return;
+      }
+      const root = document.createElement('div');
+      root.className = 'json-node';
+      const line = document.createElement('div');
+      line.className = 'json-line';
+      const open = Array.isArray(data) ? '[' : '{';
+      const close = Array.isArray(data) ? ']' : '}';
+      const isEmpty = Array.isArray(data) ? data.length === 0 : Object.keys(data).length === 0;
+
+      if (!isEmpty) {
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'json-toggle';
+        toggle.addEventListener('click', () => root.classList.toggle('collapsed'));
+        line.appendChild(toggle);
+      }
+
+      const openSpan = document.createElement('span');
+      openSpan.className = 'json-bracket';
+      openSpan.textContent = open;
+      line.appendChild(openSpan);
+
+      if (isEmpty) {
+        const closeSpan = document.createElement('span');
+        closeSpan.className = 'json-bracket';
+        closeSpan.textContent = close;
+        line.appendChild(closeSpan);
+        root.appendChild(line);
+        output.appendChild(root);
+        return;
+      }
+
+      root.appendChild(line);
+
+      const children = document.createElement('div');
+      children.className = 'json-children';
+      if (Array.isArray(data)) {
+        data.forEach((item, index) => {
+          const child = renderNode(item, undefined);
+          children.appendChild(child);
+          if (index < data.length - 1) appendComma(child);
+        });
+      } else {
+        const keys = Object.keys(data);
+        keys.forEach((k, index) => {
+          const child = renderNode(data[k], k);
+          children.appendChild(child);
+          if (index < keys.length - 1) appendComma(child);
+        });
+      }
+      root.appendChild(children);
+
+      const closeLine = document.createElement('div');
+      closeLine.className = 'json-line';
+      const closeSpan = document.createElement('span');
+      closeSpan.className = 'json-bracket';
+      closeSpan.textContent = close;
+      closeLine.appendChild(closeSpan);
+      root.appendChild(closeLine);
+
+      output.appendChild(root);
+    }
+
     function formatJSON() {
       setError('');
       if (!input.value.trim()) {
-        output.value = '';
+        output.innerHTML = '';
+        formattedText = '';
         return;
       }
       try {
         const data = JSON.parse(input.value);
         const space = indent.value === '\\t' ? '\t' : parseInt(indent.value, 10);
-        output.value = JSON.stringify(data, null, space);
+        formattedText = JSON.stringify(data, null, space);
+        renderTree(data);
       } catch (err) {
-        output.value = '';
+        output.innerHTML = '';
+        formattedText = '';
         setError('JSON 解析错误：' + err.message);
       }
     }
@@ -159,14 +385,17 @@
     function minifyJSON() {
       setError('');
       if (!input.value.trim()) {
-        output.value = '';
+        output.innerHTML = '';
+        formattedText = '';
         return;
       }
       try {
         const data = JSON.parse(input.value);
-        output.value = JSON.stringify(data);
+        formattedText = JSON.stringify(data);
+        renderTree(data);
       } catch (err) {
-        output.value = '';
+        output.innerHTML = '';
+        formattedText = '';
         setError('JSON 解析错误：' + err.message);
       }
     }
@@ -175,18 +404,23 @@
     document.getElementById('minifyBtn').addEventListener('click', minifyJSON);
     document.getElementById('clearBtn').addEventListener('click', () => {
       input.value = '';
-      output.value = '';
+      output.innerHTML = '';
+      formattedText = '';
       setError('');
       input.focus();
     });
     document.getElementById('copyBtn').addEventListener('click', async () => {
-      if (!output.value) return;
+      if (!formattedText) return;
       try {
-        await navigator.clipboard.writeText(output.value);
+        await navigator.clipboard.writeText(formattedText);
         showToast('已复制到剪贴板');
       } catch (err) {
-        output.select();
+        const ta = document.createElement('textarea');
+        ta.value = formattedText;
+        document.body.appendChild(ta);
+        ta.select();
         document.execCommand('copy');
+        document.body.removeChild(ta);
         showToast('已复制到剪贴板');
       }
     });
