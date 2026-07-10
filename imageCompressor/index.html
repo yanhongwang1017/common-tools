@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>图片压缩</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+    }
+
+    .card {
+      background: #fff;
+      width: 92%;
+      max-width: 520px;
+      padding: 32px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    .upload-area {
+      border: 2px dashed #c0c0c0;
+      border-radius: 12px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 20px;
+    }
+
+    .upload-area:hover {
+      border-color: #667eea;
+      background: #f8f9ff;
+    }
+
+    .upload-area.has-file {
+      border-color: #667eea;
+      background: #f0f3ff;
+    }
+
+    .upload-text {
+      font-size: 15px;
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    .upload-hint {
+      font-size: 12px;
+      color: #999;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .preview-section {
+      display: none;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .preview-section.show {
+      display: flex;
+    }
+
+    .preview-box {
+      flex: 1;
+      text-align: center;
+    }
+
+    .preview-label {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    .preview-img {
+      width: 100%;
+      max-height: 180px;
+      object-fit: contain;
+      border-radius: 10px;
+      border: 2px solid #e0e0e0;
+      background: #f7f8fa;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .info-item {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      background: #f7f8fa;
+      border-radius: 10px;
+    }
+
+    .info-label {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .quality-value {
+      width: 48px;
+      text-align: center;
+      font-weight: 600;
+      color: #667eea;
+    }
+
+    .filename-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .filename-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      background: #667eea;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      background: #5568d3;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      background: #c0c0c0;
+      cursor: not-allowed;
+    }
+
+    .download-link {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>图片压缩</h1>
+    <p class="subtitle">上传图片，调整质量，立即下载压缩后的文件</p>
+
+    <div class="upload-area" id="uploadArea">
+      <div class="upload-text">点击或拖拽上传图片</div>
+      <div class="upload-hint">支持 JPG、PNG、WebP 等常见格式</div>
+      <input id="fileInput" type="file" accept="image/*" />
+    </div>
+
+    <div class="preview-section" id="previewSection">
+      <div class="preview-box">
+        <div class="preview-label">原图预览</div>
+        <img class="preview-img" id="originalPreview" alt="原图预览" />
+      </div>
+      <div class="preview-box">
+        <div class="preview-label">压缩预览</div>
+        <img class="preview-img" id="compressedPreview" alt="压缩预览" />
+      </div>
+    </div>
+
+    <div class="info-row">
+      <div class="info-item">
+        <div class="info-label">原图大小</div>
+        <div class="info-value" id="originalSize">-</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">压缩后大小</div>
+        <div class="info-value" id="compressedSize">-</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">压缩率</div>
+        <div class="info-value" id="compressRatio">-</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="quality">压缩质量</label>
+      <div class="range-row">
+        <input id="quality" type="range" min="0.1" max="1" step="0.05" value="0.8" />
+        <span class="quality-value" id="qualityValue">80%</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="filename">自定义文件名（留空使用原文件名）</label>
+      <input id="filename" class="filename-input" type="text" placeholder="例如：compressed-image" />
+    </div>
+
+    <div class="actions">
+      <button id="downloadBtn" type="button" disabled>下载压缩图片</button>
+    </div>
+
+    <a class="download-link" id="downloadLink"></a>
+  </div>
+
+  <script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const previewSection = document.getElementById('previewSection');
+    const originalPreview = document.getElementById('originalPreview');
+    const compressedPreview = document.getElementById('compressedPreview');
+    const originalSize = document.getElementById('originalSize');
+    const compressedSize = document.getElementById('compressedSize');
+    const compressRatio = document.getElementById('compressRatio');
+    const qualityInput = document.getElementById('quality');
+    const qualityValue = document.getElementById('qualityValue');
+    const filenameInput = document.getElementById('filename');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const downloadLink = document.getElementById('downloadLink');
+
+    let currentFile = null;
+    let currentBlob = null;
+    let currentOutputType = 'image/jpeg';
+    let currentBlobUrl = null;
+    let originalObjectUrl = null;
+
+    function formatSize(bytes) {
+      if (bytes === 0) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(1024));
+      return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 2) + ' ' + units[i];
+    }
+
+    function getBaseName(name) {
+      return name.replace(/\.[^/.]+$/, '');
+    }
+
+    function getOutputType(file, forceJpeg) {
+      if (forceJpeg) return 'image/jpeg';
+      const type = file.type;
+      if (type === 'image/png') return 'image/png';
+      if (type === 'image/webp') return 'image/webp';
+      if (type === 'image/jpeg' || type === 'image/jpg') return 'image/jpeg';
+      return 'image/jpeg';
+    }
+
+    function getExtension(type) {
+      if (type === 'image/png') return '.png';
+      if (type === 'image/webp') return '.webp';
+      return '.jpg';
+    }
+
+    function compress(file, quality, outputType) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+
+          if (outputType === 'image/jpeg') {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+
+          ctx.drawImage(img, 0, 0);
+
+          canvas.toBlob(
+            blob => {
+              if (blob) resolve(blob);
+              else reject(new Error('压缩失败'));
+            },
+            outputType,
+            quality
+          );
+        };
+
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error('图片加载失败'));
+        };
+
+        img.src = url;
+      });
+    }
+
+    function pickBetterBlob(originalFile, keepFormatBlob, jpegBlob) {
+      if (keepFormatBlob.size <= jpegBlob.size) {
+        return { blob: keepFormatBlob, type: originalFile.type };
+      }
+      return { blob: jpegBlob, type: 'image/jpeg' };
+    }
+
+    async function updateCompressed() {
+      if (!currentFile) return;
+
+      const quality = parseFloat(qualityInput.value);
+
+      try {
+        const outputType = getOutputType(currentFile, false);
+        const keepFormatBlob = await compress(currentFile, quality, outputType);
+        let result = { blob: keepFormatBlob, type: outputType };
+
+        if (outputType !== 'image/jpeg') {
+          const jpegBlob = await compress(currentFile, quality, 'image/jpeg');
+          result = pickBetterBlob(currentFile, keepFormatBlob, jpegBlob);
+        }
+
+        if (currentBlobUrl) {
+          URL.revokeObjectURL(currentBlobUrl);
+        }
+
+        currentBlob = result.blob;
+        currentOutputType = result.type;
+        currentBlobUrl = URL.createObjectURL(result.blob);
+        compressedPreview.src = currentBlobUrl;
+
+        compressedSize.textContent = formatSize(result.blob.size);
+        const ratio = currentFile.size > 0 ? ((1 - result.blob.size / currentFile.size) * 100).toFixed(1) : 0;
+        compressRatio.textContent = ratio + '%';
+        downloadBtn.disabled = false;
+      } catch (err) {
+        alert(err.message || '压缩失败');
+      }
+    }
+
+    function handleFile(file) {
+      if (!file || !file.type.startsWith('image/')) {
+        alert('请选择图片文件');
+        return;
+      }
+
+      currentFile = file;
+      uploadArea.classList.add('has-file');
+      uploadArea.querySelector('.upload-text').textContent = file.name;
+      uploadArea.querySelector('.upload-hint').textContent = formatSize(file.size);
+      originalSize.textContent = formatSize(file.size);
+      filenameInput.value = getBaseName(file.name);
+
+      if (originalObjectUrl) {
+        URL.revokeObjectURL(originalObjectUrl);
+      }
+      originalObjectUrl = URL.createObjectURL(file);
+      originalPreview.src = originalObjectUrl;
+      previewSection.classList.add('show');
+
+      updateCompressed();
+    }
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', e => {
+      e.preventDefault();
+      uploadArea.classList.add('has-file');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      if (!currentFile) uploadArea.classList.remove('has-file');
+    });
+
+    uploadArea.addEventListener('drop', e => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      handleFile(file);
+    });
+
+    fileInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    });
+
+    qualityInput.addEventListener('input', () => {
+      qualityValue.textContent = Math.round(parseFloat(qualityInput.value) * 100) + '%';
+      updateCompressed();
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!currentBlobUrl || !currentFile || !currentBlob) return;
+
+      const customName = filenameInput.value.trim();
+      const baseName = customName || getBaseName(currentFile.name);
+      const downloadName = baseName + getExtension(currentOutputType);
+
+      downloadLink.href = currentBlobUrl;
+      downloadLink.download = downloadName;
+      downloadLink.click();
+    });
+  </script>
+</body>
+</html>

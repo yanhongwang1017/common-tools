@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>URL 编码/解码</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+    }
+
+    .card {
+      background: #fff;
+      width: 92%;
+      max-width: 600px;
+      padding: 32px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      resize: vertical;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      background: #667eea;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      background: #5568d3;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .result-wrapper {
+      position: relative;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .result-actions button {
+      flex: 1;
+      background: #f0f2f5;
+      color: #555;
+    }
+
+    .result-actions button:hover {
+      background: #e2e5e9;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>URL 编码 / 解码</h1>
+    <p class="subtitle">输入文本，进行 URL 编码或解码</p>
+
+    <div class="field">
+      <label for="inputText">输入内容</label>
+      <textarea id="inputText" placeholder="例如：https://example.com/search?q=中文"></textarea>
+    </div>
+
+    <div class="actions">
+      <button id="encodeBtn" type="button">编码</button>
+      <button id="decodeBtn" type="button">解码</button>
+      <button id="clearBtn" type="button">清空</button>
+    </div>
+
+    <div class="field result-wrapper">
+      <label for="outputText">结果</label>
+      <textarea id="outputText" readonly placeholder="编码或解码后的结果将显示在这里"></textarea>
+      <div class="result-actions">
+        <button id="copyBtn" type="button">复制结果</button>
+        <button id="swapBtn" type="button">结果转到输入</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const inputText = document.getElementById('inputText');
+    const outputText = document.getElementById('outputText');
+    const encodeBtn = document.getElementById('encodeBtn');
+    const decodeBtn = document.getElementById('decodeBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const swapBtn = document.getElementById('swapBtn');
+    const toast = document.getElementById('toast');
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function urlEncode(text) {
+      return encodeURIComponent(text);
+    }
+
+    function urlDecode(text) {
+      return decodeURIComponent(text);
+    }
+
+    encodeBtn.addEventListener('click', () => {
+      try {
+        outputText.value = urlEncode(inputText.value);
+      } catch (err) {
+        outputText.value = '';
+        showToast('编码失败：' + err.message);
+      }
+    });
+
+    decodeBtn.addEventListener('click', () => {
+      try {
+        outputText.value = urlDecode(inputText.value);
+      } catch (err) {
+        outputText.value = '';
+        showToast('解码失败：请检查输入是否为有效的 URL 编码');
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      inputText.value = '';
+      outputText.value = '';
+      inputText.focus();
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      if (!outputText.value) return;
+      try {
+        await navigator.clipboard.writeText(outputText.value);
+        showToast('已复制到剪贴板');
+      } catch (err) {
+        outputText.select();
+        document.execCommand('copy');
+        showToast('已复制到剪贴板');
+      }
+    });
+
+    swapBtn.addEventListener('click', () => {
+      inputText.value = outputText.value;
+      outputText.value = '';
+      inputText.focus();
+    });
+  </script>
+</body>
+</html>
