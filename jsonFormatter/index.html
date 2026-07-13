@@ -81,6 +81,11 @@
       background: #fff;
       user-select: text;
     }
+    .json-tree:empty::before {
+      content: '格式化后的 JSON 将显示在这里';
+      color: #aaa;
+      font-style: italic;
+    }
     .json-node { margin-left: 18px; }
     .json-line { line-height: 1.6; }
     .json-toggle { display: inline-block; vertical-align: middle; }
@@ -164,7 +169,7 @@
       </div>
       <div class="field">
         <label>结果</label>
-        <div id="output" class="json-tree" placeholder="格式化后的 JSON 将显示在这里"></div>
+        <div id="output" class="json-tree"></div>
         <div class="error-msg" id="errorMsg"></div>
       </div>
     </div>
