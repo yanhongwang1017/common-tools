@@ -17,7 +17,7 @@
     .card {
       background: #fff;
       width: 100%;
-      height: 100vh;
+      height: 100dvh;
       padding: 20px;
       display: flex;
       flex-direction: column;
@@ -80,6 +80,8 @@
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
       background: #fff;
       user-select: text;
+      white-space: pre-wrap;
+      word-break: break-all;
     }
     .json-tree:empty::before {
       content: '格式化后的 JSON 将显示在这里';
@@ -115,6 +117,7 @@
     .json-bracket { color: #555; }
     .json-preview { color: #888; margin-left: 4px; display: none; }
     .json-inline-close { display: none; }
+    .json-comma-inline { display: none; }
     .json-close { display: block; }
     .collapsed .json-preview,
     .collapsed .json-inline-close,
@@ -124,6 +127,10 @@
     .json-toggle::before { content: '−'; }
     .collapsed .json-toggle::before { content: '+'; }
     .json-empty { color: #888; }
+    .json-depth-limit {
+      color: #888;
+      font-style: italic;
+    }
     @media (max-width: 720px) {
       .editors { grid-template-columns: 1fr; }
     }
@@ -153,7 +160,7 @@
       <select id="indent">
         <option value="2">2 空格缩进</option>
         <option value="4">4 空格缩进</option>
-        <option value="\t">Tab 缩进</option>
+        <option value="tab">Tab 缩进</option>
       </select>
       <button id="formatBtn" type="button">格式化</button>
       <button id="minifyBtn" type="button" class="secondary">压缩</button>
@@ -165,12 +172,11 @@
       <div class="field">
         <label for="input">输入 JSON</label>
         <textarea id="input" placeholder='{"name":"Tom","age":18}'></textarea>
-        <div class="error-msg"></div>
+        <div class="error-msg" id="errorMsg"></div>
       </div>
       <div class="field">
         <label>结果</label>
         <div id="output" class="json-tree"></div>
-        <div class="error-msg" id="errorMsg"></div>
       </div>
     </div>
   </div>
@@ -183,6 +189,7 @@
     const indent = document.getElementById('indent');
     const errorMsg = document.getElementById('errorMsg');
     const toast = document.getElementById('toast');
+    const MAX_DEPTH = 100;
 
     let formattedText = '';
 
@@ -197,23 +204,24 @@
       input.classList.toggle('error', !!msg);
     }
 
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-    }
-
     function preview(value) {
       if (value === null) return 'null';
       if (typeof value === 'boolean') return String(value);
       if (typeof value === 'number') return String(value);
-      if (typeof value === 'string') return `"${value.length > 20 ? value.slice(0, 20) + '…' : value}"`;
+      if (typeof value === 'string') {
+        const s = JSON.stringify(value);
+        if (s.length > 23) return s.slice(0, 20) + '…"';
+        return s;
+      }
       if (Array.isArray(value)) return `Array(${value.length})`;
       return `Object(${Object.keys(value).length})`;
     }
 
-    function renderNode(value, key, comma = false) {
+    function renderNode(value, key, comma, depth) {
+      if (key === undefined) key = undefined;
+      if (comma === undefined) comma = false;
+      if (depth === undefined) depth = 0;
+
       const node = document.createElement('div');
       node.className = 'json-node';
 
@@ -222,7 +230,50 @@
       line.className = 'json-line';
 
       if (isObject) {
-        const hasChildren = Array.isArray(value) ? value.length > 0 : Object.keys(value).length > 0;
+        const open = Array.isArray(value) ? '[' : '{';
+        const close = Array.isArray(value) ? ']' : '}';
+        const isEmpty = Array.isArray(value) ? value.length === 0 : Object.keys(value).length === 0;
+        const hasChildren = !isEmpty;
+
+        // Depth limit: show placeholder and stop recursing
+        if (hasChildren && depth >= MAX_DEPTH) {
+          if (key !== undefined) {
+            const keySpan = document.createElement('span');
+            keySpan.className = 'json-key';
+            keySpan.textContent = `"${key}": `;
+            line.appendChild(keySpan);
+          }
+          const openSpan = document.createElement('span');
+          openSpan.className = 'json-bracket';
+          openSpan.textContent = open;
+          line.appendChild(openSpan);
+          node.appendChild(line);
+
+          const msgLine = document.createElement('div');
+          msgLine.className = 'json-line';
+          msgLine.style.paddingLeft = '18px';
+          const msgSpan = document.createElement('span');
+          msgSpan.className = 'json-depth-limit';
+          msgSpan.textContent = '... 层级过深，已停止展开';
+          msgLine.appendChild(msgSpan);
+          node.appendChild(msgLine);
+
+          const closeLine = document.createElement('div');
+          closeLine.className = 'json-line';
+          const closeSpan = document.createElement('span');
+          closeSpan.className = 'json-bracket';
+          closeSpan.textContent = close;
+          closeLine.appendChild(closeSpan);
+          if (comma) {
+            const commaSpan = document.createElement('span');
+            commaSpan.className = 'json-comma';
+            commaSpan.textContent = ',';
+            closeLine.appendChild(commaSpan);
+          }
+          node.appendChild(closeLine);
+          return node;
+        }
+
         if (hasChildren) {
           const toggle = document.createElement('button');
           toggle.type = 'button';
@@ -282,14 +333,16 @@
 
         node.appendChild(line);
 
-        if (!isEmpty) {
+        if (!isEmpty && depth < MAX_DEPTH) {
           const children = document.createElement('div');
           children.className = 'json-children';
           const keys = Array.isArray(value) ? value.map((_, i) => i) : Object.keys(value);
+          const fragment = document.createDocumentFragment();
           keys.forEach((k, index) => {
-            const childValue = Array.isArray(value) ? value[k] : value[k];
-            children.appendChild(renderNode(childValue, Array.isArray(value) ? undefined : k, index < keys.length - 1));
+            const childValue = value[k];
+            fragment.appendChild(renderNode(childValue, k, index < keys.length - 1, depth + 1));
           });
+          children.appendChild(fragment);
           node.appendChild(children);
 
           const closeLine = document.createElement('div');
@@ -312,7 +365,7 @@
         else if (typeof value === 'boolean') valSpan.className = 'json-boolean';
         else if (typeof value === 'number') valSpan.className = 'json-number';
         else valSpan.className = 'json-string';
-        valSpan.textContent = value === null ? 'null' : (typeof value === 'string' ? `"${escapeHtml(value)}"` : String(value));
+        valSpan.textContent = value === null ? 'null' : (typeof value === 'string' ? JSON.stringify(value) : String(value));
         line.appendChild(valSpan);
 
         if (comma) {
@@ -329,8 +382,10 @@
     }
 
     function renderTree(data) {
+      const fragment = document.createDocumentFragment();
+      fragment.appendChild(renderNode(data, undefined, false, 0));
       output.innerHTML = '';
-      output.appendChild(renderNode(data, undefined, false));
+      output.appendChild(fragment);
     }
 
     function formatJSON() {
@@ -342,7 +397,7 @@
       }
       try {
         const data = JSON.parse(input.value);
-        const space = indent.value === '\\t' ? '\t' : parseInt(indent.value, 10);
+        const space = indent.value === 'tab' ? '\t' : Number(indent.value);
         formattedText = JSON.stringify(data, null, space);
         renderTree(data);
       } catch (err) {
@@ -362,7 +417,7 @@
       try {
         const data = JSON.parse(input.value);
         formattedText = JSON.stringify(data);
-        renderTree(data);
+        output.textContent = formattedText;
       } catch (err) {
         output.innerHTML = '';
         formattedText = '';
@@ -380,7 +435,10 @@
       input.focus();
     });
     document.getElementById('copyBtn').addEventListener('click', async () => {
-      if (!formattedText) return;
+      if (!formattedText) {
+        showToast('暂无可复制内容');
+        return;
+      }
       try {
         await navigator.clipboard.writeText(formattedText);
         showToast('已复制到剪贴板');
