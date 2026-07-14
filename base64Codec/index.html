@@ -163,6 +163,21 @@
       }
     }
 
+    function textToBase64(text) {
+      const bytes = new TextEncoder().encode(text);
+      let binary = '';
+      bytes.forEach(byte => {
+        binary += String.fromCharCode(byte);
+      });
+      return btoa(binary);
+    }
+
+    function base64ToText(base64) {
+      const binary = atob(base64);
+      const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+      return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    }
+
     function convert() {
       setError('');
       const text = input.value;
@@ -171,11 +186,7 @@
         return;
       }
       try {
-        if (mode === 'encode') {
-          output.value = btoa(unescape(encodeURIComponent(text)));
-        } else {
-          output.value = decodeURIComponent(escape(atob(text)));
-        }
+        output.value = mode === 'encode' ? textToBase64(text) : base64ToText(text);
       } catch (err) {
         output.value = '';
         setError(mode === 'encode' ? '编码失败' : '解码失败：请检查是否为有效的 Base64');
