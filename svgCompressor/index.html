@@ -234,8 +234,7 @@
         showToast('已复制到剪贴板');
       } catch (err) {
         output.select();
-        document.execCommand('copy');
-        showToast('已复制到剪贴板');
+        showToast('复制失败，请手动复制');
       }
     });
   </script>

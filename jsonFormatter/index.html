@@ -443,13 +443,7 @@
         await navigator.clipboard.writeText(formattedText);
         showToast('已复制到剪贴板');
       } catch (err) {
-        const ta = document.createElement('textarea');
-        ta.value = formattedText;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        showToast('已复制到剪贴板');
+        showToast('复制失败，请手动复制');
       }
     });
   </script>

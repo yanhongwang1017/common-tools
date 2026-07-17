@@ -222,8 +222,7 @@
         showToast('已复制 CSS');
       } catch (err) {
         cssOutput.select();
-        document.execCommand('copy');
-        showToast('已复制 CSS');
+        showToast('复制失败，请手动复制');
       }
     });
 
