@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSS 转 WindiCSS 类名转换器</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+    }
+
+    .card {
+      background: #fff;
+      width: 100%;
+      min-height: 100vh;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      color: #222;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #edf2f7;
+      flex-shrink: 0;
+    }
+
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .preset-label {
+      font-size: 12px;
+      color: #666;
+      font-weight: 600;
+    }
+
+    .btn-preset {
+      padding: 5px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: #f8fafc;
+      color: #475569;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-preset:hover {
+      background: #e2e8f0;
+      color: #1e293b;
+      border-color: #cbd5e1;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      padding: 7px 14px;
+      border: none;
+      border-radius: 8px;
+      background: #667eea;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button:hover {
+      background: #5568d3;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button.secondary {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+
+    button.secondary:hover {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+      .card {
+        min-height: auto;
+      }
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: #fafbfc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .panel-badge {
+      font-size: 11px;
+      padding: 2px 7px;
+      background: #e0e7ff;
+      color: #4338ca;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+
+    .format-selector {
+      display: flex;
+      background: #e2e8f0;
+      padding: 2px;
+      border-radius: 6px;
+      gap: 2px;
+    }
+
+    .format-btn {
+      padding: 3px 8px;
+      font-size: 11px;
+      border-radius: 4px;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .format-btn.active {
+      background: #fff;
+      color: #4338ca;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    textarea {
+      width: 100%;
+      flex: 1;
+      min-height: 240px;
+      padding: 12px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      line-height: 1.5;
+      background: #fff;
+      resize: vertical;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    }
+
+    .output-box {
+      width: 100%;
+      min-height: 90px;
+      padding: 12px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      background: #1e293b;
+      color: #38bdf8;
+      font-size: 13px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      line-height: 1.6;
+      word-break: break-all;
+      white-space: pre-wrap;
+      user-select: text;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .output-box.empty {
+      color: #64748b;
+      font-style: italic;
+    }
+
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+      max-height: 120px;
+      overflow-y: auto;
+      padding: 2px 0;
+    }
+
+    .class-tag {
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .breakdown-table-wrap {
+      flex: 1;
+      min-height: 160px;
+      max-height: 240px;
+      overflow-y: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #fff;
+      margin-bottom: 12px;
+    }
+
+    table.breakdown-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    table.breakdown-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 600;
+      padding: 8px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    table.breakdown-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+    }
+
+    table.breakdown-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.breakdown-table tr:hover {
+      background: #f8fafc;
+    }
+
+    .td-css {
+      font-family: monospace;
+      color: #0369a1;
+    }
+
+    .td-windi {
+      font-family: monospace;
+      font-weight: 600;
+      color: #7c3aed;
+    }
+
+    .td-note {
+      color: #64748b;
+      font-size: 11px;
+    }
+
+    /* 实时预览区 */
+    .preview-section {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .preview-header {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .preview-container {
+      min-height: 100px;
+      background: #f8fafc;
+      background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+      background-size: 12px 12px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow: auto;
+    }
+
+    .preview-target {
+      transition: all 0.2s ease;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1e293b;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      transition: all 0.25s ease;
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .helper-tip {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>CSS 转 WindiCSS 类名转换器</h1>
+      <p class="subtitle">输入原生 CSS 样式，一键换算为 WindiCSS / Tailwind 类名，并提供换算规则与实时效果对照</p>
+    </div>
+
+    <div class="toolbar">
+      <div class="presets">
+        <span class="preset-label">快捷示例：</span>
+        <button class="btn-preset" type="button" onclick="loadPreset('flexCenter')">Flex 居中卡片</button>
+        <button class="btn-preset" type="button" onclick="loadPreset('button')">主按钮</button>
+        <button class="btn-preset" type="button" onclick="loadPreset('badge')">徽章 Tag</button>
+        <button class="btn-preset" type="button" onclick="loadPreset('glass')">毛玻璃卡片</button>
+        <button class="btn-preset" type="button" onclick="loadPreset('grid')">网格 Grid</button>
+      </div>
+      <div class="actions">
+        <button class="secondary" type="button" onclick="clearInput()">清空</button>
+        <button type="button" id="copyBtn" onclick="copyResult()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          复制类名
+        </button>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <!-- 左侧：CSS 输入面板 -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>原生 CSS 代码</span>
+            <span class="panel-badge" id="propCountBadge">0 个属性</span>
+          </div>
+          <button class="btn-preset" type="button" onclick="formatCssInput()">格式化输入</button>
+        </div>
+        <textarea id="cssInput" placeholder="在此粘贴或输入 CSS 样式代码，例如：
+display: flex;
+justify-content: center;
+align-items: center;
+width: 240px;
+height: 80px;
+padding: 16px;
+margin: 10px auto;
+background-color: #6366f1;
+color: #ffffff;
+border-radius: 12px;
+box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+font-size: 14px;
+font-weight: 600;"></textarea>
+        <div class="helper-tip">💡 提示：支持整段 CSS 选择器块、内联 style 声明、分号或换行分隔的属性。</div>
+      </div>
+
+      <!-- 右侧：WindiCSS 输出与对照面板 -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>WindiCSS 类名输出</span>
+            <span class="panel-badge" id="classCountBadge">0 个类名</span>
+          </div>
+          <div class="format-selector">
+            <button class="format-btn active" type="button" onclick="setFormat('classes')">纯类名</button>
+            <button class="format-btn" type="button" onclick="setFormat('html')">class="..."</button>
+            <button class="format-btn" type="button" onclick="setFormat('jsx')">className="..."</button>
+          </div>
+        </div>
+
+        <div class="output-box empty" id="outputBox">转换后的类名将显示在这里...</div>
+
+        <div class="tags-container" id="tagsContainer"></div>
+
+        <div class="panel-header" style="margin-top: 4px;">
+          <div class="panel-title">
+            <span>属性转换明细与对照</span>
+          </div>
+        </div>
+
+        <div class="breakdown-table-wrap">
+          <table class="breakdown-table">
+            <thead>
+              <tr>
+                <th style="width: 38%;">原始 CSS 属性</th>
+                <th style="width: 32%;">WindiCSS 类名</th>
+                <th style="width: 30%;">换算说明</th>
+              </tr>
+            </thead>
+            <tbody id="breakdownTbody">
+              <tr>
+                <td colspan="3" style="text-align: center; color: #94a3b8; padding: 24px;">暂无转换数据</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 实时渲染预览 -->
+        <div class="preview-section">
+          <div class="preview-header">实时渲染预览效果</div>
+          <div class="preview-container">
+            <div id="previewTarget" class="preview-target">预览内容示例 (Preview Box)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">已成功复制到剪贴板！</div>
+
+  <script>
+    // ==========================================
+    // 1. 核心映射数据与换算表 (CSS -> WindiCSS)
+    // ==========================================
+
+    // 标准 4px 间距比例尺表 (Tailwind / WindiCSS 默认)
+    // 1rem = 16px, 1 unit = 0.25rem = 4px
+    const spacingScale = {
+      '0px': '0', '0': '0',
+      '1px': 'px',
+      '2px': '0.5', '0.125rem': '0.5',
+      '4px': '1', '0.25rem': '1',
+      '6px': '1.5', '0.375rem': '1.5',
+      '8px': '2', '0.5rem': '2',
+      '10px': '2.5', '0.625rem': '2.5',
+      '12px': '3', '0.75rem': '3',
+      '14px': '3.5', '0.875rem': '3.5',
+      '16px': '4', '1rem': '4',
+      '20px': '5', '1.25rem': '5',
+      '24px': '6', '1.5rem': '6',
+      '28px': '7', '1.75rem': '7',
+      '32px': '8', '2rem': '8',
+      '36px': '9', '2.25rem': '9',
+      '40px': '10', '2.5rem': '10',
+      '44px': '11', '2.75rem': '11',
+      '48px': '12', '3rem': '12',
+      '56px': '14', '3.5rem': '14',
+      '64px': '16', '4rem': '16',
+      '80px': '20', '5rem': '20',
+      '96px': '24', '6rem': '24',
+      '112px': '28', '7rem': '28',
+      '128px': '32', '8rem': '32',
+      '144px': '36', '9rem': '36',
+      '160px': '40', '10rem': '40',
+      '176px': '44', '11rem': '44',
+      '192px': '48', '12rem': '48',
+      '208px': '52', '13rem': '52',
+      '224px': '56', '14rem': '56',
+      '240px': '60', '15rem': '60',
+      '256px': '64', '16rem': '64',
+      '288px': '72', '18rem': '72',
+      '320px': '80', '20rem': '80',
+      '384px': '96', '24rem': '96'
+    };
+
+    // 常见预设颜色映射
+    const namedColors = {
+      'transparent': 'transparent',
+      'currentColor': 'current',
+      'current': 'current',
+      'black': 'black',
+      '#000': 'black',
+      '#000000': 'black',
+      'white': 'white',
+      '#fff': 'white',
+      '#ffffff': 'white',
+      'red': 'red-500',
+      'blue': 'blue-500',
+      'green': 'green-500',
+      'yellow': 'yellow-500',
+      'gray': 'gray-500',
+      'grey': 'gray-500',
+      'purple': 'purple-500',
+      'indigo': 'indigo-500',
+      'pink': 'pink-500'
+    };
+
+    // 静态直接对应表
+    const staticMap = {
+      'display': {
+        'flex': { cls: 'flex', note: 'Flex 弹性容器' },
+        'inline-flex': { cls: 'inline-flex', note: '行内 Flex 容器' },
+        'grid': { cls: 'grid', note: 'Grid 网格容器' },
+        'inline-grid': { cls: 'inline-grid', note: '行内 Grid 容器' },
+        'block': { cls: 'block', note: '块级元素' },
+        'inline-block': { cls: 'inline-block', note: '行内块元素' },
+        'inline': { cls: 'inline', note: '行内元素' },
+        'none': { cls: 'hidden', note: '隐藏元素 (display: none)' },
+        'table': { cls: 'table', note: '表格' },
+        'contents': { cls: 'contents', note: 'Contents 显示' }
+      },
+      'position': {
+        'relative': { cls: 'relative', note: '相对定位' },
+        'absolute': { cls: 'absolute', note: '绝对定位' },
+        'fixed': { cls: 'fixed', note: '固定定位' },
+        'sticky': { cls: 'sticky', note: '粘性定位' },
+        'static': { cls: 'static', note: '静态默认定位' }
+      },
+      'flex-direction': {
+        'row': { cls: 'flex-row', note: '水平主轴 (默认)' },
+        'row-reverse': { cls: 'flex-row-reverse', note: '水平反向' },
+        'column': { cls: 'flex-col', note: '垂直主轴' },
+        'column-reverse': { cls: 'flex-col-reverse', note: '垂直反向' }
+      },
+      'flex-wrap': {
+        'wrap': { cls: 'flex-wrap', note: '允许换行' },
+        'nowrap': { cls: 'flex-nowrap', note: '不换行' },
+        'wrap-reverse': { cls: 'flex-wrap-reverse', note: '反向换行' }
+      },
+      'justify-content': {
+        'flex-start': { cls: 'justify-start', note: '主轴起点对齐' },
+        'start': { cls: 'justify-start', note: '主轴起点对齐' },
+        'flex-end': { cls: 'justify-end', note: '主轴终点对齐' },
+        'end': { cls: 'justify-end', note: '主轴终点对齐' },
+        'center': { cls: 'justify-center', note: '主轴居中对齐' },
+        'space-between': { cls: 'justify-between', note: '主轴两端对齐' },
+        'space-around': { cls: 'justify-around', note: '主轴分散对齐' },
+        'space-evenly': { cls: 'justify-evenly', note: '主轴均分对齐' }
+      },
+      'align-items': {
+        'flex-start': { cls: 'items-start', note: '交叉轴起点对齐' },
+        'start': { cls: 'items-start', note: '交叉轴起点对齐' },
+        'flex-end': { cls: 'items-end', note: '交叉轴终点对齐' },
+        'end': { cls: 'items-end', note: '交叉轴终点对齐' },
+        'center': { cls: 'items-center', note: '交叉轴居中对齐' },
+        'baseline': { cls: 'items-baseline', note: '基线对齐' },
+        'stretch': { cls: 'items-stretch', note: '拉伸铺满 (默认)' }
+      },
+      'align-self': {
+        'auto': { cls: 'self-auto', note: '自身对齐：继承父级' },
+        'flex-start': { cls: 'self-start', note: '自身对齐：起点' },
+        'start': { cls: 'self-start', note: '自身对齐：起点' },
+        'flex-end': { cls: 'self-end', note: '自身对齐：终点' },
+        'end': { cls: 'self-end', note: '自身对齐：终点' },
+        'center': { cls: 'self-center', note: '自身对齐：居中' },
+        'stretch': { cls: 'self-stretch', note: '自身对齐：拉伸' },
+        'baseline': { cls: 'self-baseline', note: '自身对齐：基线' }
+      },
+      'justify-items': {
+        'start': { cls: 'justify-items-start', note: 'Grid项水平起点' },
+        'end': { cls: 'justify-items-end', note: 'Grid项水平终点' },
+        'center': { cls: 'justify-items-center', note: 'Grid项水平居中' },
+        'stretch': { cls: 'justify-items-stretch', note: 'Grid项水平拉伸' }
+      },
+      'text-align': {
+        'left': { cls: 'text-left', note: '文本左对齐' },
+        'center': { cls: 'text-center', note: '文本居中对齐' },
+        'right': { cls: 'text-right', note: '文本右对齐' },
+        'justify': { cls: 'text-justify', note: '文本两端对齐' }
+      },
+      'font-weight': {
+        '100': { cls: 'font-thin', note: '字重 100 Thin' },
+        '200': { cls: 'font-extralight', note: '字重 200 Extra Light' },
+        '300': { cls: 'font-light', note: '字重 300 Light' },
+        '400': { cls: 'font-normal', note: '字重 400 Normal' },
+        'normal': { cls: 'font-normal', note: '字重 Normal' },
+        '500': { cls: 'font-medium', note: '字重 500 Medium' },
+        '600': { cls: 'font-semibold', note: '字重 600 Semi Bold' },
+        '700': { cls: 'font-bold', note: '字重 700 Bold' },
+        'bold': { cls: 'font-bold', note: '字重 Bold' },
+        '800': { cls: 'font-extrabold', note: '字重 800 Extra Bold' },
+        '900': { cls: 'font-black', note: '字重 900 Black' }
+      },
+      'font-style': {
+        'italic': { cls: 'italic', note: '斜体' },
+        'normal': { cls: 'not-italic', note: '常规非斜体' }
+      },
+      'text-decoration': {
+        'underline': { cls: 'underline', note: '下划线' },
+        'line-through': { cls: 'line-through', note: '删除线' },
+        'none': { cls: 'no-underline', note: '无下划线' }
+      },
+      'text-transform': {
+        'uppercase': { cls: 'uppercase', note: '全大写' },
+        'lowercase': { cls: 'lowercase', note: '全小写' },
+        'capitalize': { cls: 'capitalize', note: '首字母大写' },
+        'none': { cls: 'normal-case', note: '原始大小写' }
+      },
+      'white-space': {
+        'nowrap': { cls: 'whitespace-nowrap', note: '文本不换行' },
+        'normal': { cls: 'whitespace-normal', note: '常规换行' },
+        'pre': { cls: 'whitespace-pre', note: '保留空格与换行' },
+        'pre-line': { cls: 'whitespace-pre-line', note: '保留换行' },
+        'pre-wrap': { cls: 'whitespace-pre-wrap', note: '保留空格并自动换行' }
+      },
+      'word-break': {
+        'break-all': { cls: 'break-all', note: '任意字符断行' },
+        'break-word': { cls: 'break-words', note: '单词处断行' },
+        'keep-all': { cls: 'break-keep', note: '中日韩文本不断行' }
+      },
+      'box-sizing': {
+        'border-box': { cls: 'box-border', note: '包含内边距与边框' },
+        'content-box': { cls: 'box-content', note: '仅内容区' }
+      },
+      'overflow': {
+        'hidden': { cls: 'overflow-hidden', note: '隐藏溢出' },
+        'auto': { cls: 'overflow-auto', note: '自动滚动' },
+        'scroll': { cls: 'overflow-scroll', note: '总是显示滚动条' },
+        'visible': { cls: 'overflow-visible', note: '溢出可见' }
+      },
+      'overflow-x': {
+        'hidden': { cls: 'overflow-x-hidden', note: '水平隐藏溢出' },
+        'auto': { cls: 'overflow-x-auto', note: '水平自动滚动' },
+        'scroll': { cls: 'overflow-x-scroll', note: '水平滚动' }
+      },
+      'overflow-y': {
+        'hidden': { cls: 'overflow-y-hidden', note: '垂直隐藏溢出' },
+        'auto': { cls: 'overflow-y-auto', note: '垂直自动滚动' },
+        'scroll': { cls: 'overflow-y-scroll', note: '垂直滚动' }
+      },
+      'cursor': {
+        'pointer': { cls: 'cursor-pointer', note: '小手指针' },
+        'default': { cls: 'cursor-default', note: '默认箭头' },
+        'not-allowed': { cls: 'cursor-not-allowed', note: '禁用标志' },
+        'move': { cls: 'cursor-move', note: '移动指针' },
+        'text': { cls: 'cursor-text', note: '文本选择 I 型' },
+        'wait': { cls: 'cursor-wait', note: '等待加载' }
+      },
+      'user-select': {
+        'none': { cls: 'select-none', note: '禁止文本选中文本' },
+        'text': { cls: 'select-text', note: '允许文本选中' },
+        'all': { cls: 'select-all', note: '点击全选' },
+        'auto': { cls: 'select-auto', note: '默认选中文本' }
+      },
+      'pointer-events': {
+        'none': { cls: 'pointer-events-none', note: '忽略鼠标指针事件' },
+        'auto': { cls: 'pointer-events-auto', note: '接收鼠标指针事件' }
+      },
+      'visibility': {
+        'visible': { cls: 'visible', note: '可见' },
+        'hidden': { cls: 'invisible', note: '不可见（保留占位）' }
+      }
+    };
+
+    // 字体大小标准对照
+    const fontSizeMap = {
+      '12px': { cls: 'text-xs', note: '12px (0.75rem)' },
+      '0.75rem': { cls: 'text-xs', note: '12px (0.75rem)' },
+      '14px': { cls: 'text-sm', note: '14px (0.875rem)' },
+      '0.875rem': { cls: 'text-sm', note: '14px (0.875rem)' },
+      '16px': { cls: 'text-base', note: '16px (1rem)' },
+      '1rem': { cls: 'text-base', note: '16px (1rem)' },
+      '18px': { cls: 'text-lg', note: '18px (1.125rem)' },
+      '1.125rem': { cls: 'text-lg', note: '18px (1.125rem)' },
+      '20px': { cls: 'text-xl', note: '20px (1.25rem)' },
+      '1.25rem': { cls: 'text-xl', note: '20px (1.25rem)' },
+      '24px': { cls: 'text-2xl', note: '24px (1.5rem)' },
+      '1.5rem': { cls: 'text-2xl', note: '24px (1.5rem)' },
+      '30px': { cls: 'text-3xl', note: '30px (1.875rem)' },
+      '1.875rem': { cls: 'text-3xl', note: '30px (1.875rem)' },
+      '36px': { cls: 'text-4xl', note: '36px (2.25rem)' },
+      '2.25rem': { cls: 'text-4xl', note: '36px (2.25rem)' },
+      '48px': { cls: 'text-5xl', note: '48px (3rem)' },
+      '3rem': { cls: 'text-5xl', note: '48px (3rem)' },
+      '60px': { cls: 'text-6xl', note: '60px (3.75rem)' },
+      '72px': { cls: 'text-7xl', note: '72px (4.5rem)' },
+      '96px': { cls: 'text-8xl', note: '96px (6rem)' },
+      '128px': { cls: 'text-9xl', note: '128px (8rem)' }
+    };
+
+    // 圆角标准对照
+    const borderRadiusMap = {
+      '0': { cls: 'rounded-none', note: '0px 无圆角' },
+      '0px': { cls: 'rounded-none', note: '0px 无圆角' },
+      '2px': { cls: 'rounded-sm', note: '2px 小圆角' },
+      '0.125rem': { cls: 'rounded-sm', note: '2px 小圆角' },
+      '4px': { cls: 'rounded', note: '4px 默认圆角' },
+      '0.25rem': { cls: 'rounded', note: '4px 默认圆角' },
+      '6px': { cls: 'rounded-md', note: '6px 中圆角' },
+      '0.375rem': { cls: 'rounded-md', note: '6px 中圆角' },
+      '8px': { cls: 'rounded-lg', note: '8px 大圆角' },
+      '0.5rem': { cls: 'rounded-lg', note: '8px 大圆角' },
+      '12px': { cls: 'rounded-xl', note: '12px 特大圆角' },
+      '0.75rem': { cls: 'rounded-xl', note: '12px 特大圆角' },
+      '16px': { cls: 'rounded-2xl', note: '16px 2X超大圆角' },
+      '1rem': { cls: 'rounded-2xl', note: '16px 2X超大圆角' },
+      '24px': { cls: 'rounded-3xl', note: '24px 3X超大圆角' },
+      '1.5rem': { cls: 'rounded-3xl', note: '24px 3X超大圆角' },
+      '50%': { cls: 'rounded-full', note: '50% 胶囊/圆形' },
+      '9999px': { cls: 'rounded-full', note: '全胶囊圆角' }
+    };
+
+    // 阴影对照
+    const boxShadowMap = {
+      'none': { cls: 'shadow-none', note: '无阴影' },
+      '0 1px 2px 0 rgba(0, 0, 0, 0.05)': { cls: 'shadow-sm', note: '微小阴影 (sm)' },
+      '0 1px 2px rgba(0, 0, 0, 0.05)': { cls: 'shadow-sm', note: '微小阴影 (sm)' },
+      '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)': { cls: 'shadow', note: '基础阴影 (base)' },
+      '0 1px 3px rgba(0, 0, 0, 0.1)': { cls: 'shadow', note: '基础阴影 (base)' },
+      '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)': { cls: 'shadow-md', note: '中等阴影 (md)' },
+      '0 4px 6px -1px rgba(0, 0, 0, 0.1)': { cls: 'shadow-md', note: '中等阴影 (md)' },
+      '0 4px 6px rgba(0, 0, 0, 0.1)': { cls: 'shadow-md', note: '中等阴影 (md)' },
+      '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)': { cls: 'shadow-lg', note: '较大阴影 (lg)' },
+      '0 10px 15px -3px rgba(0, 0, 0, 0.1)': { cls: 'shadow-lg', note: '较大阴影 (lg)' },
+      '0 10px 15px rgba(0, 0, 0, 0.1)': { cls: 'shadow-lg', note: '较大阴影 (lg)' },
+      '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)': { cls: 'shadow-xl', note: '超大阴影 (xl)' },
+      '0 20px 25px -5px rgba(0, 0, 0, 0.1)': { cls: 'shadow-xl', note: '超大阴影 (xl)' },
+      '0 25px 50px -12px rgba(0, 0, 0, 0.25)': { cls: 'shadow-2xl', note: '最大阴影 (2xl)' },
+      'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)': { cls: 'shadow-inner', note: '内阴影 (inner)' }
+    };
+
+    // ==========================================
+    // 2. 转换处理函数
+    // ==========================================
+
+    function sanitizeArbitrary(val) {
+      let s = val.trim().replace(/,\s+/g, ',');
+      return s.replace(/\s+/g, '_');
+    }
+
+    function convertDimension(prefix, val, propLabel = '') {
+      val = val.trim();
+      const isNegative = val.startsWith('-');
+      const absVal = isNegative ? val.substring(1) : val;
+
+      if (val === '100%') return { cls: `${prefix}-full`, note: '100% 满宽/高' };
+      if (val === '100vw') return { cls: `${prefix}-screen`, note: '100vw 视口宽' };
+      if (val === '100vh') return { cls: `${prefix}-screen`, note: '100vh 视口高' };
+      if (val === 'auto') return { cls: `${prefix}-auto`, note: '自动 auto' };
+      if (val === '50%') return { cls: `${prefix}-1/2`, note: '50% 一半' };
+      if (val === '33.333333%' || val === '33.33%' || val === '33.3%') return { cls: `${prefix}-1/3`, note: '1/3' };
+      if (val === '66.666667%' || val === '66.66%' || val === '66.7%') return { cls: `${prefix}-2/3`, note: '2/3' };
+      if (val === '25%') return { cls: `${prefix}-1/4`, note: '1/4' };
+      if (val === '75%') return { cls: `${prefix}-3/4`, note: '3/4' };
+      if (val === 'min-content') return { cls: `${prefix}-min`, note: '最小内容 min-content' };
+      if (val === 'max-content') return { cls: `${prefix}-max`, note: '最大内容 max-content' };
+      if (val === 'fit-content') return { cls: `${prefix}-fit`, note: '贴合内容 fit-content' };
+
+      if (spacingScale[absVal]) {
+        const scale = spacingScale[absVal];
+        const negPrefix = isNegative ? '-' : '';
+        return {
+          cls: `${negPrefix}${prefix}-${scale}`,
+          note: `${val} (标准尺度: ${scale} = ${scale} × 4px)`
+        };
+      }
+
+      const negPrefix = isNegative ? '-' : '';
+      return {
+        cls: `${negPrefix}${prefix}-[${sanitizeArbitrary(absVal)}]`,
+        note: `${val} (WindiCSS 任意值)`
+      };
+    }
+
+    function convertColor(prefix, val) {
+      val = val.trim();
+      const lower = val.toLowerCase();
+      if (namedColors[lower]) {
+        const name = namedColors[lower];
+        return {
+          cls: `${prefix}-${name}`,
+          note: `预设颜色: ${val} -> ${name}`
+        };
+      }
+      return {
+        cls: `${prefix}-[${sanitizeArbitrary(val)}]`,
+        note: `颜色任意值: ${val}`
+      };
+    }
+
+    function translateProperty(prop, value) {
+      prop = prop.trim().toLowerCase();
+      value = value.trim();
+      if (!prop || !value) return [];
+
+      // 1. 静态字典查询
+      if (staticMap[prop] && staticMap[prop][value.toLowerCase()]) {
+        const item = staticMap[prop][value.toLowerCase()];
+        return [{ prop, val: value, cls: item.cls, note: item.note }];
+      }
+
+      // 2. 宽度与高度
+      if (prop === 'width') {
+        const res = convertDimension('w', value);
+        return [{ prop, val: value, cls: res.cls, note: res.note }];
+      }
+      if (prop === 'height') {
+        const res = convertDimension('h', value);
+        return [{ prop, val: value, cls: res.cls, note: res.note }];
+      }
+      if (prop === 'min-width') {
+        if (value === '0' || value === '0px') return [{ prop, val: value, cls: 'min-w-0', note: 'min-width: 0' }];
+        if (value === '100%') return [{ prop, val: value, cls: 'min-w-full', note: 'min-width: 100%' }];
+        if (value === 'min-content') return [{ prop, val: value, cls: 'min-w-min', note: 'min-width: min-content' }];
+        if (value === 'max-content') return [{ prop, val: value, cls: 'min-w-max', note: 'min-width: max-content' }];
+        return [{ prop, val: value, cls: `min-w-[${sanitizeArbitrary(value)}]`, note: '最小宽度任意值' }];
+      }
+      if (prop === 'max-width') {
+        if (value === 'none') return [{ prop, val: value, cls: 'max-w-none', note: '无最大宽度限制' }];
+        if (value === '100%') return [{ prop, val: value, cls: 'max-w-full', note: 'max-width: 100%' }];
+        if (value === 'min-content') return [{ prop, val: value, cls: 'max-w-min', note: 'max-width: min-content' }];
+        if (value === 'max-content') return [{ prop, val: value, cls: 'max-w-max', note: 'max-width: max-content' }];
+        return [{ prop, val: value, cls: `max-w-[${sanitizeArbitrary(value)}]`, note: '最大宽度任意值' }];
+      }
+      if (prop === 'min-height') {
+        if (value === '0' || value === '0px') return [{ prop, val: value, cls: 'min-h-0', note: 'min-height: 0' }];
+        if (value === '100%') return [{ prop, val: value, cls: 'min-h-full', note: 'min-height: 100%' }];
+        if (value === '100vh') return [{ prop, val: value, cls: 'min-h-screen', note: 'min-height: 100vh' }];
+        return [{ prop, val: value, cls: `min-h-[${sanitizeArbitrary(value)}]`, note: '最小高度任意值' }];
+      }
+      if (prop === 'max-height') {
+        if (value === '100%') return [{ prop, val: value, cls: 'max-h-full', note: 'max-height: 100%' }];
+        if (value === '100vh') return [{ prop, val: value, cls: 'max-h-screen', note: 'max-height: 100vh' }];
+        return [{ prop, val: value, cls: `max-h-[${sanitizeArbitrary(value)}]`, note: '最大高度任意值' }];
+      }
+
+      // 3. Margin 与 Padding
+      if (prop === 'margin' || prop === 'padding') {
+        const pfx = prop === 'margin' ? 'm' : 'p';
+        const parts = value.split(/\s+/).filter(Boolean);
+        if (parts.length === 1) {
+          const res = convertDimension(pfx, parts[0]);
+          return [{ prop, val: value, cls: res.cls, note: `${prop}: ${value} -> 全方向 ${res.cls}` }];
+        } else if (parts.length === 2) {
+          const resY = convertDimension(`${pfx}y`, parts[0]);
+          const resX = convertDimension(`${pfx}x`, parts[1]);
+          return [
+            { prop: `${prop} (上下)`, val: parts[0], cls: resY.cls, note: `上下: ${resY.note}` },
+            { prop: `${prop} (左右)`, val: parts[1], cls: resX.cls, note: `左右: ${resX.note}` }
+          ];
+        } else if (parts.length === 3) {
+          const resT = convertDimension(`${pfx}t`, parts[0]);
+          const resX = convertDimension(`${pfx}x`, parts[1]);
+          const resB = convertDimension(`${pfx}b`, parts[2]);
+          return [
+            { prop: `${prop}-top`, val: parts[0], cls: resT.cls, note: resT.note },
+            { prop: `${prop}-x (左右)`, val: parts[1], cls: resX.cls, note: resX.note },
+            { prop: `${prop}-bottom`, val: parts[2], cls: resB.cls, note: resB.note }
+          ];
+        } else if (parts.length === 4) {
+          const resT = convertDimension(`${pfx}t`, parts[0]);
+          const resR = convertDimension(`${pfx}r`, parts[1]);
+          const resB = convertDimension(`${pfx}b`, parts[2]);
+          const resL = convertDimension(`${pfx}l`, parts[3]);
+          return [
+            { prop: `${prop}-top`, val: parts[0], cls: resT.cls, note: resT.note },
+            { prop: `${prop}-right`, val: parts[1], cls: resR.cls, note: resR.note },
+            { prop: `${prop}-bottom`, val: parts[2], cls: resB.cls, note: resB.note },
+            { prop: `${prop}-left`, val: parts[3], cls: resL.cls, note: resL.note }
+          ];
+        }
+      }
+      if (/^(margin|padding)-(top|bottom|left|right)$/.test(prop)) {
+        const match = prop.match(/^(margin|padding)-(top|bottom|left|right)$/);
+        const pfx = match[1] === 'margin' ? 'm' : 'p';
+        const dir = match[2][0];
+        const res = convertDimension(`${pfx}${dir}`, value);
+        return [{ prop, val: value, cls: res.cls, note: res.note }];
+      }
+
+      // 4. 定位坐标
+      if (/^(top|bottom|left|right|inset)$/.test(prop)) {
+        const res = convertDimension(prop, value);
+        return [{ prop, val: value, cls: res.cls, note: res.note }];
+      }
+
+      // 5. Gap
+      if (prop === 'gap') {
+        const parts = value.split(/\s+/).filter(Boolean);
+        if (parts.length === 1) {
+          const res = convertDimension('gap', parts[0]);
+          return [{ prop, val: value, cls: res.cls, note: res.note }];
+        } else if (parts.length === 2) {
+          const resY = convertDimension('gap-y', parts[0]);
+          const resX = convertDimension('gap-x', parts[1]);
+          return [
+            { prop: 'gap-y', val: parts[0], cls: resY.cls, note: resY.note },
+            { prop: 'gap-x', val: parts[1], cls: resX.cls, note: resX.note }
+          ];
+        }
+      }
+      if (prop === 'row-gap') {
+        const res = convertDimension('gap-y', value);
+        return [{ prop, val: value, cls: res.cls, note: res.note }];
+      }
+      if (prop === 'column-gap') {
+        const res = convertDimension('gap-x', value);
+        return [{ prop, val: value, cls: res.cls, note: res.note }];
+      }
+
+      // 6. 字体大小与行高
+      if (prop === 'font-size') {
+        if (fontSizeMap[value]) {
+          return [{ prop, val: value, cls: fontSizeMap[value].cls, note: fontSizeMap[value].note }];
+        }
+        return [{ prop, val: value, cls: `text-[${sanitizeArbitrary(value)}]`, note: `字号任意值 ${value}` }];
+      }
+      if (prop === 'line-height') {
+        const lhMap = {
+          '1': { cls: 'leading-none', note: '行高 1 紧凑' },
+          '1.25': { cls: 'leading-tight', note: '行高 1.25 tight' },
+          '1.375': { cls: 'leading-snug', note: '行高 1.375 snug' },
+          '1.5': { cls: 'leading-normal', note: '行高 1.5 normal' },
+          '1.625': { cls: 'leading-relaxed', note: '行高 1.625 relaxed' },
+          '2': { cls: 'leading-loose', note: '行高 2 loose' }
+        };
+        if (lhMap[value]) {
+          return [{ prop, val: value, cls: lhMap[value].cls, note: lhMap[value].note }];
+        }
+        if (spacingScale[value]) {
+          return [{ prop, val: value, cls: `leading-${spacingScale[value]}`, note: `行高 ${value}` }];
+        }
+        return [{ prop, val: value, cls: `leading-[${sanitizeArbitrary(value)}]`, note: `行高任意值 ${value}` }];
+      }
+      if (prop === 'letter-spacing') {
+        const lsMap = {
+          '-0.05em': { cls: 'tracking-tighter', note: '-0.05em' },
+          '-0.025em': { cls: 'tracking-tight', note: '-0.025em' },
+          '0': { cls: 'tracking-normal', note: '0' },
+          '0em': { cls: 'tracking-normal', note: '0' },
+          '0.025em': { cls: 'tracking-wide', note: '0.025em' },
+          '0.05em': { cls: 'tracking-wider', note: '0.05em' },
+          '0.1em': { cls: 'tracking-widest', note: '0.1em' }
+        };
+        if (lsMap[value]) {
+          return [{ prop, val: value, cls: lsMap[value].cls, note: lsMap[value].note }];
+        }
+        return [{ prop, val: value, cls: `tracking-[${sanitizeArbitrary(value)}]`, note: `字间距任意值 ${value}` }];
+      }
+
+      // 7. 颜色与背景
+      if (prop === 'color') {
+        const res = convertColor('text', value);
+        return [{ prop, val: value, cls: res.cls, note: res.note }];
+      }
+      if (prop === 'background-color') {
+        const res = convertColor('bg', value);
+        return [{ prop, val: value, cls: res.cls, note: res.note }];
+      }
+      if (prop === 'background') {
+        if (value.startsWith('linear-gradient') || value.startsWith('radial-gradient')) {
+          return [{ prop, val: value, cls: `bg-[${sanitizeArbitrary(value)}]`, note: '渐变背景任意值' }];
+        }
+        if (value === 'none') {
+          return [{ prop, val: value, cls: 'bg-none', note: '无背景' }];
+        }
+        const res = convertColor('bg', value);
+        return [{ prop, val: value, cls: res.cls, note: res.note }];
+      }
+      if (prop === 'background-size') {
+        if (value === 'cover') return [{ prop, val: value, cls: 'bg-cover', note: 'bg-cover 覆盖铺满' }];
+        if (value === 'contain') return [{ prop, val: value, cls: 'bg-contain', note: 'bg-contain 完整包含' }];
+        if (value === 'auto') return [{ prop, val: value, cls: 'bg-auto', note: 'bg-auto 原始尺寸' }];
+      }
+      if (prop === 'background-position') {
+        if (['center', 'top', 'bottom', 'left', 'right'].includes(value)) {
+          return [{ prop, val: value, cls: `bg-${value}`, note: `背景定位: ${value}` }];
+        }
+      }
+      if (prop === 'background-repeat') {
+        if (value === 'no-repeat') return [{ prop, val: value, cls: 'bg-no-repeat', note: '不重复' }];
+        if (value === 'repeat') return [{ prop, val: value, cls: 'bg-repeat', note: '平铺重复' }];
+      }
+
+      // 8. 边框与圆角
+      if (prop === 'border-radius') {
+        if (borderRadiusMap[value]) {
+          return [{ prop, val: value, cls: borderRadiusMap[value].cls, note: borderRadiusMap[value].note }];
+        }
+        return [{ prop, val: value, cls: `rounded-[${sanitizeArbitrary(value)}]`, note: `圆角任意值 ${value}` }];
+      }
+      if (/^border-(top|bottom|left|right)-radius$/.test(prop) || /^border-(top|bottom)-(left|right)-radius$/.test(prop)) {
+        const cornerMap = {
+          'border-top-left-radius': 'rounded-tl',
+          'border-top-right-radius': 'rounded-tr',
+          'border-bottom-left-radius': 'rounded-bl',
+          'border-bottom-right-radius': 'rounded-br'
+        };
+        const pfx = cornerMap[prop] || 'rounded';
+        if (borderRadiusMap[value]) {
+          const suffix = borderRadiusMap[value].cls.replace('rounded', '');
+          return [{ prop, val: value, cls: `${pfx}${suffix}`, note: `单角圆角 ${value}` }];
+        }
+        return [{ prop, val: value, cls: `${pfx}-[${sanitizeArbitrary(value)}]`, note: `单角圆角任意值 ${value}` }];
+      }
+      if (prop === 'border-width') {
+        const bwMap = { '0': 'border-0', '0px': 'border-0', '1px': 'border', '2px': 'border-2', '4px': 'border-4', '8px': 'border-8' };
+        if (bwMap[value]) return [{ prop, val: value, cls: bwMap[value], note: `边框粗细: ${value}` }];
+        return [{ prop, val: value, cls: `border-[${sanitizeArbitrary(value)}]`, note: `边框粗细任意值 ${value}` }];
+      }
+      if (prop === 'border-color') {
+        const res = convertColor('border', value);
+        return [{ prop, val: value, cls: res.cls, note: res.note }];
+      }
+      if (prop === 'border-style') {
+        if (['solid', 'dashed', 'dotted', 'double', 'none'].includes(value)) {
+          return [{ prop, val: value, cls: `border-${value}`, note: `边框样式: ${value}` }];
+        }
+      }
+      if (prop === 'border') {
+        if (value === 'none' || value === '0') {
+          return [{ prop, val: value, cls: 'border-0', note: '无边框' }];
+        }
+        const parts = value.split(/\s+/).filter(Boolean);
+        const subResults = [];
+        let hasWidth = false;
+        for (const p of parts) {
+          if (/^\d+(px|rem|em)?$/.test(p)) {
+            hasWidth = true;
+            if (p === '1px') subResults.push({ prop: 'border (width)', val: p, cls: 'border', note: '边框粗细 1px' });
+            else if (['2px', '4px', '8px'].includes(p)) subResults.push({ prop: 'border (width)', val: p, cls: `border-${p.replace('px','')}`, note: `边框粗细 ${p}` });
+            else subResults.push({ prop: 'border (width)', val: p, cls: `border-[${p}]`, note: `边框粗细任意值 ${p}` });
+          } else if (['solid', 'dashed', 'dotted', 'double'].includes(p)) {
+            if (p !== 'solid') {
+              subResults.push({ prop: 'border (style)', val: p, cls: `border-${p}`, note: `边框样式: ${p}` });
+            }
+          } else {
+            const col = convertColor('border', p);
+            subResults.push({ prop: 'border (color)', val: p, cls: col.cls, note: col.note });
+          }
+        }
+        if (!hasWidth) subResults.unshift({ prop: 'border (width)', val: '1px', cls: 'border', note: '默认 1px 边框' });
+        return subResults;
+      }
+
+      // 9. 阴影与不透明度
+      if (prop === 'box-shadow') {
+        if (boxShadowMap[value]) {
+          return [{ prop, val: value, cls: boxShadowMap[value].cls, note: boxShadowMap[value].note }];
+        }
+        return [{ prop, val: value, cls: `shadow-[${sanitizeArbitrary(value)}]`, note: `阴影任意值 (空格转下划线)` }];
+      }
+      if (prop === 'opacity') {
+        const num = parseFloat(value);
+        if (!isNaN(num)) {
+          const pct = Math.round(num * 100);
+          return [{ prop, val: value, cls: `opacity-${pct}`, note: `不透明度 ${pct}%` }];
+        }
+        return [{ prop, val: value, cls: `opacity-[${value}]`, note: `不透明度任意值` }];
+      }
+      if (prop === 'z-index') {
+        if (['0', '10', '20', '30', '40', '50', 'auto'].includes(value)) {
+          return [{ prop, val: value, cls: `z-${value}`, note: `层级 z-index: ${value}` }];
+        }
+        return [{ prop, val: value, cls: `z-[${value}]`, note: `层级任意值 z-[${value}]` }];
+      }
+
+      // 10. Flex 与 Grid 相关
+      if (prop === 'flex') {
+        if (value === '1' || value === '1 1 0%') return [{ prop, val: value, cls: 'flex-1', note: '弹性拉伸铺满 (1 1 0%)' }];
+        if (value === 'auto' || value === '1 1 auto') return [{ prop, val: value, cls: 'flex-auto', note: '弹性自适应 (1 1 auto)' }];
+        if (value === 'initial' || value === '0 1 auto') return [{ prop, val: value, cls: 'flex-initial', note: '初始状态 (0 1 auto)' }];
+        if (value === 'none' || value === '0 0 auto') return [{ prop, val: value, cls: 'flex-none', note: '禁止伸缩 (0 0 auto)' }];
+        return [{ prop, val: value, cls: `flex-[${sanitizeArbitrary(value)}]`, note: `Flex 任意值` }];
+      }
+      if (prop === 'flex-grow') {
+        if (value === '1') return [{ prop, val: value, cls: 'flex-grow', note: '允许放大 flex-grow: 1' }];
+        if (value === '0') return [{ prop, val: value, cls: 'flex-grow-0', note: '不放大 flex-grow: 0' }];
+        return [{ prop, val: value, cls: `flex-grow-[${value}]`, note: `放大系数 ${value}` }];
+      }
+      if (prop === 'flex-shrink') {
+        if (value === '1') return [{ prop, val: value, cls: 'flex-shrink', note: '允许缩小 flex-shrink: 1' }];
+        if (value === '0') return [{ prop, val: value, cls: 'flex-shrink-0', note: '不缩小 flex-shrink: 0' }];
+        return [{ prop, val: value, cls: `flex-shrink-[${value}]`, note: `缩小系数 ${value}` }];
+      }
+      if (prop === 'order') {
+        if (['1','2','3','4','5','6','7','8','9','10','11','12'].includes(value)) {
+          return [{ prop, val: value, cls: `order-${value}`, note: `排序 order: ${value}` }];
+        }
+        if (value === '-9999' || value === 'first') return [{ prop, val: value, cls: 'order-first', note: '最前排序' }];
+        if (value === '9999' || value === 'last') return [{ prop, val: value, cls: 'order-last', note: '最后排序' }];
+        if (value === '0' || value === 'none') return [{ prop, val: value, cls: 'order-none', note: '无特定排序' }];
+        return [{ prop, val: value, cls: `order-[${value}]`, note: `排序任意值` }];
+      }
+      if (prop === 'grid-template-columns') {
+        const repMatch = value.match(/repeat\((\d+),\s*minmax\(0,\s*1fr\)\)/);
+        if (repMatch) {
+          return [{ prop, val: value, cls: `grid-cols-${repMatch[1]}`, note: `${repMatch[1]} 列等分网格` }];
+        }
+        return [{ prop, val: value, cls: `grid-cols-[${sanitizeArbitrary(value)}]`, note: `网格列任意值` }];
+      }
+
+      // 11. 过渡与特效
+      if (prop === 'transition') {
+        if (value === 'all') return [{ prop, val: value, cls: 'transition-all', note: '全部属性过渡' }];
+        if (value === 'none') return [{ prop, val: value, cls: 'transition-none', note: '无过渡' }];
+        if (value.includes('colors')) return [{ prop, val: value, cls: 'transition-colors', note: '颜色过渡' }];
+        if (value.includes('opacity')) return [{ prop, val: value, cls: 'transition-opacity', note: '透明度过渡' }];
+        if (value.includes('transform')) return [{ prop, val: value, cls: 'transition-transform', note: '变换过渡' }];
+        return [{ prop, val: value, cls: 'transition-all', note: '过渡效果' }];
+      }
+      if (prop === 'transition-duration') {
+        const ms = parseInt(value, 10) * (value.endsWith('s') && !value.endsWith('ms') ? 1000 : 1);
+        if ([75, 100, 150, 200, 300, 500, 700, 1000].includes(ms)) {
+          return [{ prop, val: value, cls: `duration-${ms}`, note: `过渡持续 ${ms}ms` }];
+        }
+        return [{ prop, val: value, cls: `duration-[${value}]`, note: `过渡时间任意值 ${value}` }];
+      }
+      if (prop === 'backdrop-filter') {
+        const blurMatch = value.match(/blur\((\d+px)\)/);
+        if (blurMatch) {
+          const bmap = { '4px': 'backdrop-blur-sm', '8px': 'backdrop-blur-md', '12px': 'backdrop-blur-lg', '16px': 'backdrop-blur-xl', '24px': 'backdrop-blur-2xl' };
+          if (bmap[blurMatch[1]]) return [{ prop, val: value, cls: bmap[blurMatch[1]], note: `毛玻璃模糊 ${blurMatch[1]}` }];
+        }
+        return [{ prop, val: value, cls: `backdrop-filter backdrop-blur-[${sanitizeArbitrary(value.replace('blur(','').replace(')',''))}]`, note: '毛玻璃特效' }];
+      }
+
+      // 未知属性：输出通用任意属性语法
+      return [{ prop, val: value, cls: `[${prop}:${sanitizeArbitrary(value)}]`, note: '通用任意属性语法' }];
+    }
+
+    function parseCss(cssText) {
+      let cleaned = cssText.replace(/\/\*[\s\S]*?\*\//g, '');
+      const braceMatches = cleaned.match(/\{([\s\S]*?)\}/g);
+      let content = '';
+      if (braceMatches && braceMatches.length > 0) {
+        content = braceMatches.map(m => m.slice(1, -1)).join('\n');
+      } else {
+        content = cleaned;
+      }
+
+      const lines = content.split(/[\n;]+/).map(l => l.trim()).filter(Boolean);
+      const declarations = [];
+
+      for (const line of lines) {
+        const colonIdx = line.indexOf(':');
+        if (colonIdx === -1) continue;
+        const prop = line.substring(0, colonIdx).trim();
+        const val = line.substring(colonIdx + 1).trim();
+        if (prop && val) {
+          declarations.push({ prop, val });
+        }
+      }
+      return declarations;
+    }
+
+    // ==========================================
+    // 3. UI 交互与渲染
+    // ==========================================
+    let currentFormat = 'classes';
+    let currentConvertedList = [];
+
+    const cssInput = document.getElementById('cssInput');
+    const outputBox = document.getElementById('outputBox');
+    const tagsContainer = document.getElementById('tagsContainer');
+    const breakdownTbody = document.getElementById('breakdownTbody');
+    const propCountBadge = document.getElementById('propCountBadge');
+    const classCountBadge = document.getElementById('classCountBadge');
+    const previewTarget = document.getElementById('previewTarget');
+    const toast = document.getElementById('toast');
+
+    function convert() {
+      const text = cssInput.value;
+      const declarations = parseCss(text);
+      propCountBadge.textContent = `${declarations.length} 个属性`;
+
+      if (declarations.length === 0) {
+        outputBox.className = 'output-box empty';
+        outputBox.textContent = '转换后的类名将显示在这里...';
+        tagsContainer.innerHTML = '';
+        breakdownTbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #94a3b8; padding: 24px;">暂无转换数据</td></tr>`;
+        classCountBadge.textContent = '0 个类名';
+        previewTarget.style.cssText = '';
+        currentConvertedList = [];
+        return;
+      }
+
+      const allItems = [];
+      const rawClasses = [];
+      let inlineStyleString = '';
+
+      declarations.forEach(d => {
+        inlineStyleString += `${d.prop}: ${d.val}; `;
+        const converted = translateProperty(d.prop, d.val);
+        converted.forEach(item => {
+          allItems.push(item);
+          rawClasses.push(item.cls);
+        });
+      });
+
+      const uniqueClasses = Array.from(new Set(rawClasses));
+      currentConvertedList = uniqueClasses;
+      classCountBadge.textContent = `${uniqueClasses.length} 个类名`;
+
+      updateOutputDisplay();
+
+      tagsContainer.innerHTML = uniqueClasses.map(cls => `<span class="class-tag">${cls}</span>`).join('');
+
+      breakdownTbody.innerHTML = allItems.map(item => `
+        <tr>
+          <td class="td-css">${escapeHtml(item.prop)}: ${escapeHtml(item.val)}</td>
+          <td class="td-windi">${escapeHtml(item.cls)}</td>
+          <td class="td-note">${escapeHtml(item.note || '-')}</td>
+        </tr>
+      `).join('');
+
+      try {
+        previewTarget.style.cssText = inlineStyleString;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function updateOutputDisplay() {
+      if (currentConvertedList.length === 0) {
+        outputBox.className = 'output-box empty';
+        outputBox.textContent = '转换后的类名将显示在这里...';
+        return;
+      }
+
+      outputBox.className = 'output-box';
+      const classStr = currentConvertedList.join(' ');
+
+      if (currentFormat === 'classes') {
+        outputBox.textContent = classStr;
+      } else if (currentFormat === 'html') {
+        outputBox.textContent = `class="${classStr}"`;
+      } else if (currentFormat === 'jsx') {
+        outputBox.textContent = `className="${classStr}"`;
+      }
+    }
+
+    function setFormat(fmt) {
+      currentFormat = fmt;
+      document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      updateOutputDisplay();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function clearInput() {
+      cssInput.value = '';
+      convert();
+      cssInput.focus();
+    }
+
+    function formatCssInput() {
+      const declarations = parseCss(cssInput.value);
+      if (declarations.length === 0) return;
+      cssInput.value = declarations.map(d => `  ${d.prop}: ${d.val};`).join('\n');
+      convert();
+    }
+
+    const presets = {
+      flexCenter: `.card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 280px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 600;
+}`,
+      button: `.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  background-color: #6366f1;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+  user-select: none;
+}`,
+      badge: `.tag {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #2563eb;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 9999px;
+}`,
+      glass: `.glass-box {
+  width: 260px;
+  padding: 24px;
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  color: #334155;
+  font-size: 14px;
+}`,
+      grid: `.grid-layout {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+  padding: 16px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+}`
+    };
+
+    function loadPreset(key) {
+      if (presets[key]) {
+        cssInput.value = presets[key];
+        convert();
+      }
+    }
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+
+    function copyResult() {
+      if (currentConvertedList.length === 0) {
+        showToast('请先输入有效的 CSS 代码！');
+        return;
+      }
+      const text = outputBox.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('已成功复制到剪贴板 ✓');
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('已成功复制到剪贴板 ✓');
+      });
+    }
+
+    cssInput.addEventListener('input', convert);
+    loadPreset('flexCenter');
+  </script>
+</body>
+</html>

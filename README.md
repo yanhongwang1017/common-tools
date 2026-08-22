@@ -22,8 +22,10 @@
 │   └── index.html          # CSS 渐变背景生成器
 ├── shadowGenerator/
 │   └── index.html          # CSS 阴影生成器
-└── svgCompressor/
-    └── index.html          # SVG 压缩工具
+├── svgCompressor/
+│   └── index.html          # SVG 压缩工具
+└── cssToWindi/
+    └── index.html          # CSS 转 WindiCSS 类名工具
 ```
 
 ## 使用方法
@@ -104,6 +106,17 @@
 - 移除注释、换行和多余空白。
 - 显示原始大小、压缩后大小和压缩率。
 - 支持复制压缩后的 SVG。
+
+### 9. CSS 转 WindiCSS
+
+将原生 CSS 样式代码转换为 WindiCSS / Tailwind 类名。
+
+- 支持整段选择器块、内联声明等多种 CSS 输入格式。
+- 智能尺寸单位换算（如 `16px` -> `4`，`10px` -> `2.5`）与任意值（如 `w-[135px]`）生成。
+- 涵盖 Flexbox、Grid、间距尺寸、字体排版、颜色背景、边框圆角、阴影特效等完整属性。
+- 提供属性逐条转换对照表及换算原理解析，辅助快速上手 WindiCSS。
+- 支持纯类名、`class="..."`、`className="..."` 多种输出格式切换与一键复制。
+- 内置经典样式模板（Flex居中、主按钮、徽章、毛玻璃、Grid网格）与实时渲染预览。
 
 ## 如何新增工具
 
