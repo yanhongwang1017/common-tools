@@ -400,6 +400,87 @@
       align-items: center;
       gap: 4px;
     }
+
+    .panel-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* 输入智能补全下拉框 */
+    .ac-dropdown {
+      position: absolute;
+      z-index: 1000;
+      min-width: 240px;
+      max-width: 460px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+      padding: 4px;
+      display: none;
+      font-size: 12px;
+    }
+
+    .ac-dropdown.show {
+      display: block;
+    }
+
+    .ac-list {
+      max-height: 228px;
+      overflow-y: auto;
+    }
+
+    .ac-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #334155;
+    }
+
+    .ac-item.active {
+      background: #eef2ff;
+    }
+
+    .ac-item.active .ac-label {
+      color: #4338ca;
+    }
+
+    .ac-label {
+      font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .ac-label b {
+      color: #4338ca;
+      font-weight: 700;
+    }
+
+    .ac-detail {
+      color: #94a3b8;
+      font-size: 11px;
+      font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 220px;
+      flex-shrink: 0;
+    }
+
+    .ac-footer {
+      padding: 5px 10px 3px;
+      border-top: 1px solid #f1f5f9;
+      color: #94a3b8;
+      font-size: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
   </style>
 </head>
 <body>
@@ -417,6 +498,12 @@
         <button class="btn-preset" type="button" onclick="loadPreset('badge')">徽章 Tag</button>
         <button class="btn-preset" type="button" onclick="loadPreset('glass')">毛玻璃卡片</button>
         <button class="btn-preset" type="button" onclick="loadPreset('grid')">网格 Grid</button>
+        <button class="btn-preset" type="button" onclick="loadPreset('inputField')">输入框</button>
+        <button class="btn-preset" type="button" onclick="loadPreset('navbar')">导航栏</button>
+        <button class="btn-preset" type="button" onclick="loadPreset('gradientBtn')">渐变按钮</button>
+        <button class="btn-preset" type="button" onclick="loadPreset('avatar')">头像</button>
+        <button class="btn-preset" type="button" onclick="loadPreset('heading')">大标题</button>
+        <button class="btn-preset" type="button" onclick="loadPreset('disabledBtn')">禁用按钮</button>
       </div>
       <div class="actions">
         <button class="secondary" type="button" onclick="clearInput()">清空</button>
@@ -435,7 +522,10 @@
             <span>原生 CSS 代码</span>
             <span class="panel-badge" id="propCountBadge">0 个属性</span>
           </div>
-          <button class="btn-preset" type="button" onclick="formatCssInput()">格式化输入</button>
+          <div class="panel-actions">
+            <button class="btn-preset" type="button" onclick="formatCssInput()">格式化输入</button>
+            <button class="btn-preset" type="button" id="acToggle" title="输入 CSS 时自动弹出属性与取值提示">智能补全：开</button>
+          </div>
         </div>
         <textarea id="cssInput" placeholder="在此粘贴或输入 CSS 样式代码，例如：
 display: flex;
@@ -451,7 +541,7 @@ border-radius: 12px;
 box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 font-size: 14px;
 font-weight: 600;"></textarea>
-        <div class="helper-tip">💡 提示：支持整段 CSS 选择器块、内联 style 声明、分号或换行分隔的属性。</div>
+        <div class="helper-tip">💡 提示：输入时自动弹出属性与取值补全（↑↓ 选择 · Enter/Tab 确认 · Esc 关闭）；支持整段 CSS 选择器块、内联 style 声明、分号或换行分隔的属性。</div>
       </div>
 
       <!-- 右侧：WindiCSS 输出与对照面板 -->
@@ -503,6 +593,15 @@ font-weight: 600;"></textarea>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="ac-dropdown" id="acDropdown">
+    <div class="ac-list" id="acList"></div>
+    <div class="ac-footer">
+      <span>↑↓ 选择</span>
+      <span>Enter / Tab 确认</span>
+      <span>Esc 关闭</span>
     </div>
   </div>
 
@@ -1399,6 +1498,75 @@ font-weight: 600;"></textarea>
   padding: 16px;
   background-color: #f8fafc;
   border-radius: 8px;
+}`,
+      inputField: `.input-field {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #1f2937;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+}`,
+      navbar: `.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}`,
+      gradientBtn: `.btn-gradient {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+  cursor: pointer;
+}`,
+      avatar: `.avatar {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #c7d2fe;
+  color: #4338ca;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 9999px;
+  user-select: none;
+}`,
+      heading: `.page-title {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: #0f172a;
+}`,
+      disabledBtn: `.btn-disabled {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  background-color: #e5e7eb;
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  opacity: 0.6;
+  cursor: not-allowed;
+  user-select: none;
+  pointer-events: none;
 }`
     };
 
@@ -1437,6 +1605,436 @@ font-weight: 600;"></textarea>
     }
 
     cssInput.addEventListener('input', convert);
+
+    // ==========================================
+    // 4. 输入智能补全
+    // ==========================================
+
+    // 支持的 CSS 属性列表（属性名 + 中文说明），按字母序排列
+    const acPropList = [
+      ['align-items', 'Flex 交叉轴对齐'],
+      ['align-self', '单个 Flex 项对齐'],
+      ['backdrop-filter', '毛玻璃模糊'],
+      ['background', '背景（颜色 / 渐变）'],
+      ['background-color', '背景颜色'],
+      ['background-position', '背景位置'],
+      ['background-repeat', '背景重复方式'],
+      ['background-size', '背景尺寸'],
+      ['border', '边框（复合写法）'],
+      ['border-bottom-left-radius', '左下圆角'],
+      ['border-bottom-right-radius', '右下圆角'],
+      ['border-color', '边框颜色'],
+      ['border-radius', '圆角'],
+      ['border-style', '边框样式'],
+      ['border-top-left-radius', '左上圆角'],
+      ['border-top-right-radius', '右上圆角'],
+      ['border-width', '边框粗细'],
+      ['box-shadow', '阴影'],
+      ['box-sizing', '盒模型计算方式'],
+      ['color', '文字颜色'],
+      ['column-gap', '列间距'],
+      ['cursor', '鼠标指针样式'],
+      ['display', '布局方式 flex / grid'],
+      ['flex', 'Flex 复合属性'],
+      ['flex-direction', '主轴方向'],
+      ['flex-grow', '放大比例'],
+      ['flex-shrink', '缩小比例'],
+      ['flex-wrap', '是否换行'],
+      ['font-size', '字体大小'],
+      ['font-style', '斜体'],
+      ['font-weight', '字重'],
+      ['gap', '行/列间距'],
+      ['grid-template-columns', '网格列定义'],
+      ['height', '高度'],
+      ['inset', '四向偏移简写'],
+      ['justify-content', '主轴对齐'],
+      ['justify-items', 'Grid 项水平对齐'],
+      ['letter-spacing', '字间距'],
+      ['line-height', '行高'],
+      ['margin', '外边距'],
+      ['margin-bottom', '下外边距'],
+      ['margin-left', '左外边距'],
+      ['margin-right', '右外边距'],
+      ['margin-top', '上外边距'],
+      ['max-height', '最大高度'],
+      ['max-width', '最大宽度'],
+      ['min-height', '最小高度'],
+      ['min-width', '最小宽度'],
+      ['opacity', '不透明度'],
+      ['order', '排序'],
+      ['overflow', '溢出处理'],
+      ['overflow-x', '水平溢出'],
+      ['overflow-y', '垂直溢出'],
+      ['padding', '内边距'],
+      ['padding-bottom', '下内边距'],
+      ['padding-left', '左内边距'],
+      ['padding-right', '右内边距'],
+      ['padding-top', '上内边距'],
+      ['pointer-events', '指针事件'],
+      ['position', '定位方式'],
+      ['row-gap', '行间距'],
+      ['text-align', '文本对齐'],
+      ['text-decoration', '下划线 / 删除线'],
+      ['text-transform', '大小写转换'],
+      ['top', '顶部偏移'],
+      ['bottom', '底部偏移'],
+      ['left', '左侧偏移'],
+      ['right', '右侧偏移'],
+      ['transition', '过渡效果'],
+      ['transition-duration', '过渡时长'],
+      ['user-select', '文本选中'],
+      ['visibility', '可见性'],
+      ['white-space', '换行与空格'],
+      ['width', '宽度'],
+      ['word-break', '断词方式'],
+      ['z-index', '层级']
+    ];
+
+    // 尺寸类属性：取值可由多段组成（如 margin: 10px auto），补全时只替换最后一个词
+    const acDimensionProps = new Set([
+      'width', 'height', 'min-width', 'max-width', 'min-height', 'max-height',
+      'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+      'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+      'top', 'bottom', 'left', 'right', 'inset',
+      'gap', 'row-gap', 'column-gap', 'border'
+    ]);
+
+    // 颜色类属性：提示预设颜色，detail 直接给出对应 WindiCSS 颜色类
+    const acColorValueProps = { 'color': 'text', 'background-color': 'bg', 'background': 'bg', 'border-color': 'border' };
+    const acColorValues = ['transparent', 'black', 'white', 'red', 'blue', 'green', 'yellow', 'gray', 'purple', 'indigo', 'pink'];
+
+    const acDimensionValues = ['auto', '0', '100%', '50%', '25%', '75%', '1fr', '4px', '8px', '12px', '16px', '20px', '24px', '32px', '40px', '48px', '64px', 'min-content', 'max-content', 'fit-content'];
+
+    // 枚举取值类属性的提示值，detail 通过 translateProperty 实时换算
+    const acEnumValueProps = {
+      'font-size': () => Object.keys(fontSizeMap),
+      'border-radius': () => Object.keys(borderRadiusMap),
+      'box-shadow': () => Object.keys(boxShadowMap),
+      'line-height': () => ['1', '1.25', '1.375', '1.5', '1.625', '2'],
+      'letter-spacing': () => ['-0.05em', '-0.025em', '0', '0.025em', '0.05em', '0.1em'],
+      'opacity': () => ['0', '0.25', '0.5', '0.75', '1'],
+      'z-index': () => ['0', '10', '20', '30', '40', '50', 'auto'],
+      'flex': () => ['1', 'auto', 'initial', 'none'],
+      'flex-grow': () => ['0', '1'],
+      'flex-shrink': () => ['0', '1'],
+      'order': () => ['first', '1', '2', '3', '4', '5', '6', 'last', 'none'],
+      'transition': () => ['all', 'colors', 'opacity', 'transform', 'none'],
+      'transition-duration': () => ['75ms', '100ms', '150ms', '200ms', '300ms', '500ms', '700ms', '1000ms'],
+      'backdrop-filter': () => ['blur(4px)', 'blur(8px)', 'blur(12px)', 'blur(16px)', 'blur(24px)'],
+      'grid-template-columns': () => [1, 2, 3, 4, 5, 6].map(n => `repeat(${n}, minmax(0, 1fr))`),
+      'border-width': () => ['0', '1px', '2px', '4px', '8px'],
+      'border-style': () => ['solid', 'dashed', 'dotted', 'double', 'none']
+    };
+
+    let acEnabled = true;
+    let acItems = [];
+    let acIndex = 0;
+    let acCtx = null;
+
+    const acDropdown = document.getElementById('acDropdown');
+    const acListEl = document.getElementById('acList');
+
+    function windiPreview(prop, val) {
+      try {
+        return translateProperty(prop, val).map(r => r.cls).join(' ');
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function buildValueHints(prop) {
+      if (staticMap[prop]) {
+        return {
+          multi: false,
+          items: Object.keys(staticMap[prop]).map(v => ({ label: v, detail: staticMap[prop][v].cls }))
+        };
+      }
+      if (acEnumValueProps[prop]) {
+        return {
+          multi: false,
+          items: acEnumValueProps[prop]().map(v => ({ label: v, detail: windiPreview(prop, v) }))
+        };
+      }
+      if (acColorValueProps[prop]) {
+        const pfx = acColorValueProps[prop];
+        return {
+          multi: false,
+          items: acColorValues.map(v => ({ label: v, detail: `${pfx}-${namedColors[v]}` }))
+        };
+      }
+      if (acDimensionProps.has(prop)) {
+        return {
+          multi: true,
+          items: acDimensionValues.map(v => ({ label: v, detail: windiPreview(prop, v) }))
+        };
+      }
+      return null;
+    }
+
+    // 分析光标所在位置：处于属性名阶段还是属性值阶段
+    function getAcContext() {
+      const caret = cssInput.selectionStart;
+      const before = cssInput.value.substring(0, caret);
+      const segStart = Math.max(
+        before.lastIndexOf(';'), before.lastIndexOf('{'),
+        before.lastIndexOf('}'), before.lastIndexOf('\n')
+      ) + 1;
+      const segment = before.substring(segStart);
+      const colonIdx = segment.indexOf(':');
+
+      if (colonIdx === -1) {
+        const token = (segment.match(/[a-zA-Z-]+$/) || [''])[0];
+        if (!token) return null;
+        return { kind: 'prop', prefix: token, start: caret - token.length, end: caret };
+      }
+
+      const prop = segment.substring(0, colonIdx).trim().toLowerCase();
+      if (!/^[a-z-]+$/.test(prop)) return null;
+      const rawPrefix = segment.substring(colonIdx + 1);
+      if (rawPrefix.includes('\n')) return null;
+      const hints = buildValueHints(prop);
+      if (!hints) return null;
+      const trimmed = rawPrefix.trim();
+      // 多段值（如 margin: 10px auto）只匹配最后一个词，单值属性匹配整段
+      const prefix = hints.multi ? (trimmed.split(/\s+/).pop() || '') : trimmed;
+      return { kind: 'value', prop, hints, prefix, start: caret - prefix.length, end: caret };
+    }
+
+    function updateSuggestions() {
+      if (!acEnabled) {
+        hideAc();
+        return;
+      }
+      const ctx = getAcContext();
+      if (!ctx) {
+        hideAc();
+        return;
+      }
+
+      let items;
+      if (ctx.kind === 'prop') {
+        items = acPropList
+          .filter(p => p[0].startsWith(ctx.prefix) && p[0] !== ctx.prefix)
+          .slice(0, 30)
+          .map(p => ({ label: p[0], detail: p[1] }));
+      } else {
+        items = ctx.hints.items
+          .filter(it => it.label.startsWith(ctx.prefix) && it.label !== ctx.prefix)
+          .slice(0, 30);
+      }
+
+      if (items.length === 0) {
+        hideAc();
+        return;
+      }
+      acCtx = ctx;
+      acItems = items;
+      acIndex = 0;
+      renderAc();
+      positionAc();
+    }
+
+    function renderAc() {
+      const plen = acCtx ? acCtx.prefix.length : 0;
+      acListEl.innerHTML = acItems.map((it, i) => {
+        const head = escapeHtml(it.label.slice(0, plen));
+        const rest = escapeHtml(it.label.slice(plen));
+        const detail = it.detail ? `<span class="ac-detail">${escapeHtml(it.detail)}</span>` : '';
+        return `<div class="ac-item${i === acIndex ? ' active' : ''}" data-idx="${i}">
+          <span class="ac-label">${plen ? `<b>${head}</b>` : ''}${rest}</span>${detail}
+        </div>`;
+      }).join('');
+      const active = acListEl.children[acIndex];
+      if (active) active.scrollIntoView({ block: 'nearest' });
+    }
+
+    function hideAc() {
+      acDropdown.classList.remove('show');
+      acItems = [];
+      acCtx = null;
+    }
+
+    function isAcVisible() {
+      return acDropdown.classList.contains('show') && acItems.length > 0;
+    }
+
+    // 镜像元素法计算光标在 textarea 中的像素坐标
+    function getCaretCoordinates(textarea, pos) {
+      const computed = window.getComputedStyle(textarea);
+      const div = document.createElement('div');
+      const style = div.style;
+      ['boxSizing', 'width', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+        'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing',
+        'lineHeight', 'textIndent', 'wordSpacing', 'textTransform'].forEach(key => {
+        style[key] = computed[key];
+      });
+      style.position = 'absolute';
+      style.visibility = 'hidden';
+      style.whiteSpace = 'pre-wrap';
+      style.overflowWrap = 'break-word';
+      style.borderStyle = 'solid';
+      style.borderWidth = computed.borderWidth;
+      div.textContent = textarea.value.substring(0, pos);
+      const span = document.createElement('span');
+      span.textContent = textarea.value.substring(pos, pos + 1) || '\u200b';
+      div.appendChild(span);
+      document.body.appendChild(div);
+      const coords = {
+        top: span.offsetTop,
+        left: span.offsetLeft,
+        height: parseFloat(computed.lineHeight) || span.offsetHeight
+      };
+      document.body.removeChild(div);
+      return coords;
+    }
+
+    function positionAc() {
+      const coords = getCaretCoordinates(cssInput, cssInput.selectionStart);
+      const rect = cssInput.getBoundingClientRect();
+      acDropdown.classList.add('show');
+      const ddWidth = acDropdown.offsetWidth;
+      const ddHeight = acDropdown.offsetHeight;
+      let x = rect.left + window.scrollX + coords.left - cssInput.scrollLeft + 2;
+      let y = rect.top + window.scrollY + coords.top - cssInput.scrollTop + coords.height + 4;
+      const maxLeft = window.scrollX + document.documentElement.clientWidth - ddWidth - 8;
+      if (x > maxLeft) x = Math.max(window.scrollX + 8, maxLeft);
+      // 下方空间不足时改为在光标上方弹出
+      if (y + ddHeight > window.scrollY + window.innerHeight - 8) {
+        y = rect.top + window.scrollY + coords.top - cssInput.scrollTop - ddHeight - 4;
+      }
+      acDropdown.style.left = `${Math.round(x)}px`;
+      acDropdown.style.top = `${Math.round(y)}px`;
+    }
+
+    function acceptAc(idx) {
+      const item = acItems[idx];
+      if (!item || !acCtx) return;
+      let insert;
+      let caretOffset;
+      let skipAfter = 0;
+      if (acCtx.kind === 'prop') {
+        // 属性骨架：补全 prop: ; 光标落在分号前，输入取值后天然以分号结尾
+        insert = `${item.label}: ;`;
+        caretOffset = item.label.length + 2;
+      } else if (acCtx.hints.multi) {
+        // 多段值（如 margin）只插入值本身，便于继续输入第二段
+        insert = item.label;
+        caretOffset = insert.length;
+      } else {
+        // 枚举值：补上分号换行，并沿用当前行缩进保持块内对齐
+        const lineStart = cssInput.value.lastIndexOf('\n', acCtx.start - 1) + 1;
+        const indent = (cssInput.value.substring(lineStart, acCtx.start).match(/^[ \t]*/) || [''])[0];
+        insert = `${item.label};\n${indent}`;
+        caretOffset = insert.length;
+        // 属性骨架已带分号时跳过它，避免出现两个分号
+        if (cssInput.value.substring(acCtx.end, acCtx.end + 1) === ';') skipAfter = 1;
+      }
+      const start = acCtx.start;
+      const end = acCtx.end;
+      cssInput.value = cssInput.value.substring(0, start) + insert + cssInput.value.substring(end + skipAfter);
+      const newCaret = start + caretOffset;
+      cssInput.setSelectionRange(newCaret, newCaret);
+      const wasProp = acCtx.kind === 'prop';
+      hideAc();
+      convert();
+      // 选中属性后紧接着提示该属性的取值
+      if (wasProp) updateSuggestions();
+    }
+
+    cssInput.addEventListener('input', updateSuggestions);
+    cssInput.addEventListener('blur', hideAc);
+    cssInput.addEventListener('click', hideAc);
+    cssInput.addEventListener('scroll', () => {
+      if (isAcVisible()) positionAc();
+    });
+
+    cssInput.addEventListener('keydown', e => {
+      if (e.isComposing) return;
+      if (isAcVisible()) {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          const delta = e.key === 'ArrowDown' ? 1 : -1;
+          acIndex = (acIndex + delta + acItems.length) % acItems.length;
+          renderAc();
+        } else if (e.key === 'Enter' || e.key === 'Tab') {
+          e.preventDefault();
+          acceptAc(acIndex);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          hideAc();
+        } else if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+          hideAc();
+        }
+        return;
+      }
+      if (e.key === 'Enter') {
+        insertAutoIndent(e);
+      } else if (e.key === '}') {
+        dedentClosingBrace(e);
+      }
+    });
+
+    // 回车自动缩进：沿用当前行缩进；{ 后回车加深两格，若后面紧跟 } 则同时展开闭合行
+    function insertAutoIndent(e) {
+      const caret = cssInput.selectionStart;
+      const end = cssInput.selectionEnd;
+      const value = cssInput.value;
+      const lineStart = value.lastIndexOf('\n', caret - 1) + 1;
+      const lineBeforeCaret = value.substring(lineStart, caret);
+      const indent = (lineBeforeCaret.match(/^[ \t]*/) || [''])[0];
+      const opensBlock = lineBeforeCaret.trimEnd().endsWith('{');
+      let insertFrom = end;
+      // 光标后紧跟分号时，先跳过分号再换行，避免分号被甩到下一行行首
+      if (!opensBlock && value.substring(insertFrom, insertFrom + 1) === ';') insertFrom += 1;
+      const nextChar = value.substring(insertFrom, insertFrom + 1);
+
+      e.preventDefault();
+      let insert;
+      let caretOffset;
+      if (opensBlock && nextChar === '}') {
+        insert = '\n' + indent + '  \n' + indent;
+        caretOffset = ('\n' + indent + '  ').length;
+      } else if (opensBlock) {
+        insert = '\n' + indent + '  ';
+        caretOffset = insert.length;
+      } else {
+        insert = '\n' + indent;
+        caretOffset = insert.length;
+      }
+      cssInput.value = value.substring(0, caret) + value.substring(end, insertFrom) + insert + value.substring(insertFrom);
+      const newCaret = caret + (insertFrom - end) + caretOffset;
+      cssInput.setSelectionRange(newCaret, newCaret);
+      convert();
+    }
+
+    // 在纯缩进行上输入 } 时自动回退两格，保持与 { 所在行对齐
+    function dedentClosingBrace(e) {
+      const caret = cssInput.selectionStart;
+      const value = cssInput.value;
+      const lineStart = value.lastIndexOf('\n', caret - 1) + 1;
+      const before = value.substring(lineStart, caret);
+      if (!/^[ \t]+$/.test(before)) return;
+      e.preventDefault();
+      const dedented = before.slice(0, before.length - Math.min(2, before.length));
+      cssInput.value = value.substring(0, lineStart) + dedented + '}' + value.substring(caret);
+      const newCaret = lineStart + dedented.length + 1;
+      cssInput.setSelectionRange(newCaret, newCaret);
+      convert();
+    }
+
+    // mousedown 阻止默认行为，避免点击下拉项时输入框失焦
+    acListEl.addEventListener('mousedown', e => e.preventDefault());
+    acListEl.addEventListener('click', e => {
+      const itemEl = e.target.closest('.ac-item');
+      if (itemEl) acceptAc(parseInt(itemEl.dataset.idx, 10));
+    });
+
+    document.getElementById('acToggle').addEventListener('click', function () {
+      acEnabled = !acEnabled;
+      this.textContent = `智能补全：${acEnabled ? '开' : '关'}`;
+      if (!acEnabled) hideAc();
+    });
+
     loadPreset('flexCenter');
   </script>
 </body>
