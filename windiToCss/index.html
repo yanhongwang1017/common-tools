@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WindiCSS 转 CSS 样式转换器</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
+    body {
+      height: 100vh;
+      display: flex;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      overflow: hidden;
+    }
+
+    .card {
+      background: #fff;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 20px;
+      color: #222;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 12px;
+      margin: 0;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #edf2f7;
+      flex-shrink: 0;
+    }
+
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .preset-label {
+      font-size: 12px;
+      color: #666;
+      font-weight: 600;
+    }
+
+    .btn-preset {
+      padding: 4px 9px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: #f8fafc;
+      color: #475569;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-preset:hover {
+      background: #e2e8f0;
+      color: #1e293b;
+      border-color: #cbd5e1;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      padding: 6px 13px;
+      border: none;
+      border-radius: 8px;
+      background: #667eea;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button:hover {
+      background: #5568d3;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button.secondary {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+
+    button.secondary:hover {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      flex: 1;
+      min-height: 0;
+      height: 100%;
+    }
+
+    @media (max-width: 900px) {
+      body, .card {
+        height: auto;
+        overflow: auto;
+      }
+      .main-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      height: 100%;
+      background: #fafbfc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .panel-badge {
+      font-size: 11px;
+      padding: 2px 7px;
+      background: #e0e7ff;
+      color: #4338ca;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+
+    .selector-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    .selector-input-wrap label {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .selector-input {
+      flex: 1;
+      padding: 4px 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      background: #fff;
+    }
+
+    .format-selector {
+      display: flex;
+      background: #e2e8f0;
+      padding: 2px;
+      border-radius: 6px;
+      gap: 2px;
+    }
+
+    .format-btn {
+      padding: 3px 8px;
+      font-size: 11px;
+      border-radius: 4px;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .format-btn.active {
+      background: #fff;
+      color: #4338ca;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    textarea {
+      width: 100%;
+      flex: 1;
+      min-height: 100px;
+      padding: 10px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      line-height: 1.5;
+      background: #fff;
+      resize: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    }
+
+    .output-box {
+      width: 100%;
+      flex: 1;
+      min-height: 130px;
+      padding: 10px 12px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      background: #1e293b;
+      color: #38bdf8;
+      font-size: 12.5px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      line-height: 1.5;
+      word-break: break-all;
+      white-space: pre-wrap;
+      user-select: text;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .output-box.empty {
+      color: #64748b;
+      font-style: italic;
+    }
+
+    .breakdown-table-wrap {
+      flex: 1;
+      min-height: 120px;
+      overflow-y: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    table.breakdown-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+      text-align: left;
+    }
+
+    table.breakdown-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    table.breakdown-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+    }
+
+    table.breakdown-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.breakdown-table tr:hover {
+      background: #f8fafc;
+    }
+
+    .td-windi {
+      font-family: monospace;
+      font-weight: 600;
+      color: #7c3aed;
+    }
+
+    .td-css {
+      font-family: monospace;
+      color: #0369a1;
+    }
+
+    .td-variant {
+      font-size: 10px;
+      padding: 1px 4px;
+      border-radius: 4px;
+      background: #fef3c7;
+      color: #b45309;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+
+    .td-note {
+      color: #64748b;
+      font-size: 11px;
+    }
+
+    /* 实时预览区 */
+    .preview-section {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      margin-top: 10px;
+    }
+
+    .preview-header {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .preview-container {
+      min-height: 90px;
+      max-height: 140px;
+      background: #f8fafc;
+      background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+      background-size: 12px 12px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      overflow: auto;
+    }
+
+    .preview-target {
+      transition: all 0.2s ease;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1e293b;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      transition: all 0.25s ease;
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .helper-tip {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+  </style>
+  <style id="dynamicPreviewStyle"></style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>WindiCSS 转 CSS 样式转换器</h1>
+      <p class="subtitle">输入 WindiCSS / Tailwind 类名或 HTML 片段，一键还原为原生 CSS 规则与属性明细</p>
+    </div>
+
+    <div class="toolbar">
+      <div class="presets">
+        <span class="preset-label">快捷示例：</span>
+        <button class="btn-preset" type="button" onclick="loadPreset('flexCenter')">Flex 居中卡片</button>
+        <button class="btn-preset" type="button" onclick="loadPreset('hoverBtn')">交互按钮 (含 hover)</button>
+        <button class="btn-preset" type="button" onclick="loadPreset('badge')">徽章 Tag</button>
+        <button class="btn-preset" type="button" onclick="loadPreset('glass')">毛玻璃特效</button>
+        <button class="btn-preset" type="button" onclick="loadPreset('responsive')">响应式布局 (md:)</button>
+      </div>
+      <div class="actions">
+        <button class="secondary" type="button" onclick="clearInput()">清空</button>
+        <button type="button" id="copyBtn" onclick="copyResult()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          复制 CSS
+        </button>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <!-- 左侧：WindiCSS 类名输入面板 + 实时渲染预览 -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>WindiCSS 类名输入</span>
+            <span class="panel-badge" id="classCountBadge">0 个类名</span>
+          </div>
+          <button class="btn-preset" type="button" onclick="cleanAndExtractClasses()">提取类名</button>
+        </div>
+
+        <div class="selector-input-wrap">
+          <label for="selectorInput">CSS 选择器名称：</label>
+          <input type="text" id="selectorInput" class="selector-input" value=".custom-box" placeholder=".custom-box" oninput="convert()" />
+        </div>
+
+        <textarea id="windiInput" placeholder="在此粘贴 WindiCSS / Tailwind 类名或包含 class 的 HTML 标签，例如：
+flex items-center justify-between p-4 bg-white rounded-xl shadow-md
+hover:bg-gray-50 md:flex-row
+text-sm font-semibold text-gray-800"></textarea>
+        <div class="helper-tip">💡 提示：支持直接粘贴 &lt;div class="..."&gt;、空格换行分隔的类名、以及 hover:(...) 组语法。</div>
+
+        <!-- 实时渲染预览移至左侧面板下方，平衡左右排版 -->
+        <div class="preview-section">
+          <div class="preview-header">实时渲染预览效果</div>
+          <div class="preview-container">
+            <div id="previewTarget" class="preview-target">预览内容示例 (Preview Box)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：CSS 输出与对照面板 -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>原生 CSS 代码输出</span>
+          </div>
+          <div class="format-selector">
+            <button class="format-btn active" type="button" onclick="setFormat('standard')">标准 CSS</button>
+            <button class="format-btn" type="button" onclick="setFormat('inline')">内联 style</button>
+            <button class="format-btn" type="button" onclick="setFormat('scss')">SCSS 嵌套</button>
+          </div>
+        </div>
+
+        <div class="output-box empty" id="outputBox">转换后的 CSS 代码将显示在这里...</div>
+
+        <div class="panel-header" style="margin-top: 4px;">
+          <div class="panel-title">
+            <span>类名反查与属性对照表</span>
+          </div>
+        </div>
+
+        <div class="breakdown-table-wrap">
+          <table class="breakdown-table">
+            <thead>
+              <tr>
+                <th style="width: 32%;">WindiCSS 类名</th>
+                <th style="width: 40%;">生成的 CSS 属性</th>
+                <th style="width: 28%;">说明</th>
+              </tr>
+            </thead>
+            <tbody id="breakdownTbody">
+              <tr>
+                <td colspan="3" style="text-align: center; color: #94a3b8; padding: 24px;">暂无转换数据</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">已成功复制到剪贴板！</div>
+
+  <script>
+    // ==========================================
+    // 1. 尺度换算与字典定义 (WindiCSS -> CSS)
+    // ==========================================
+
+    // 标准 4px 比例尺反查 (1 unit = 0.25rem = 4px)
+    const scaleToPx = {
+      '0': '0px',
+      'px': '1px',
+      '0.5': '2px',
+      '1': '4px',
+      '1.5': '6px',
+      '2': '8px',
+      '2.5': '10px',
+      '3': '12px',
+      '3.5': '14px',
+      '4': '16px',
+      '5': '20px',
+      '6': '24px',
+      '7': '28px',
+      '8': '32px',
+      '9': '36px',
+      '10': '40px',
+      '11': '44px',
+      '12': '48px',
+      '14': '56px',
+      '16': '64px',
+      '20': '80px',
+      '24': '96px',
+      '28': '112px',
+      '32': '128px',
+      '36': '144px',
+      '40': '160px',
+      '44': '176px',
+      '48': '192px',
+      '52': '208px',
+      '56': '224px',
+      '60': '240px',
+      '64': '256px',
+      '72': '288px',
+      '80': '320px',
+      '96': '384px'
+    };
+
+    // 常见预设调色板
+    const colorPalette = {
+      'transparent': 'transparent',
+      'current': 'currentColor',
+      'black': '#000000',
+      'white': '#ffffff',
+      'gray-50': '#f9fafb', 'gray-100': '#f3f4f6', 'gray-200': '#e5e7eb', 'gray-300': '#d1d5db',
+      'gray-400': '#9ca3af', 'gray-500': '#6b7280', 'gray-600': '#4b5563', 'gray-700': '#374151',
+      'gray-800': '#1f2937', 'gray-900': '#111827',
+      'red-50': '#fef2f2', 'red-100': '#fee2e2', 'red-200': '#fecaca', 'red-300': '#fca5a5',
+      'red-400': '#f87171', 'red-500': '#ef4444', 'red-600': '#dc2626', 'red-700': '#b91c1c',
+      'yellow-50': '#fffbeb', 'yellow-100': '#fef3c7', 'yellow-400': '#facc15', 'yellow-500': '#eab308',
+      'green-50': '#f0fdf4', 'green-100': '#dcfce7', 'green-500': '#22c55e', 'green-600': '#16a34a',
+      'blue-50': '#eff6ff', 'blue-100': '#dbeafe', 'blue-200': '#bfdbfe', 'blue-500': '#3b82f6',
+      'blue-600': '#2563eb', 'blue-700': '#1d4ed8',
+      'indigo-50': '#eef2ff', 'indigo-100': '#e0e7ff', 'indigo-500': '#6366f1', 'indigo-600': '#4f46e5',
+      'purple-50': '#faf5ff', 'purple-100': '#f3e8ff', 'purple-500': '#a855f7', 'purple-600': '#9333ea',
+      'pink-50': '#fdf2f8', 'pink-100': '#fce7f3', 'pink-500': '#ec4899', 'pink-600': '#db2777'
+    };
+
+    // 静态完整对应表
+    const staticClassMap = {
+      // Display
+      'flex': [{ prop: 'display', val: 'flex', note: 'Flex 弹性布局' }],
+      'inline-flex': [{ prop: 'display', val: 'inline-flex', note: '行内 Flex' }],
+      'grid': [{ prop: 'display', val: 'grid', note: 'Grid 网格布局' }],
+      'inline-grid': [{ prop: 'display', val: 'inline-grid', note: '行内 Grid' }],
+      'block': [{ prop: 'display', val: 'block', note: '块级元素' }],
+      'inline-block': [{ prop: 'display', val: 'inline-block', note: '行内块元素' }],
+      'inline': [{ prop: 'display', val: 'inline', note: '行内元素' }],
+      'hidden': [{ prop: 'display', val: 'none', note: '隐藏元素' }],
+      'table': [{ prop: 'display', val: 'table', note: '表格' }],
+      'contents': [{ prop: 'display', val: 'contents', note: 'Contents' }],
+
+      // Position
+      'relative': [{ prop: 'position', val: 'relative', note: '相对定位' }],
+      'absolute': [{ prop: 'position', val: 'absolute', note: '绝对定位' }],
+      'fixed': [{ prop: 'position', val: 'fixed', note: '固定定位' }],
+      'sticky': [{ prop: 'position', val: 'sticky', note: '粘性定位' }],
+      'static': [{ prop: 'position', val: 'static', note: '静态定位' }],
+
+      // Flex Direction & Wrap
+      'flex-row': [{ prop: 'flex-direction', val: 'row', note: '水平排列' }],
+      'flex-row-reverse': [{ prop: 'flex-direction', val: 'row-reverse', note: '水平反向' }],
+      'flex-col': [{ prop: 'flex-direction', val: 'column', note: '垂直排列' }],
+      'flex-col-reverse': [{ prop: 'flex-direction', val: 'column-reverse', note: '垂直反向' }],
+      'flex-wrap': [{ prop: 'flex-wrap', val: 'wrap', note: '允许换行' }],
+      'flex-nowrap': [{ prop: 'flex-wrap', val: 'nowrap', note: '不换行' }],
+      'flex-wrap-reverse': [{ prop: 'flex-wrap', val: 'wrap-reverse', note: '反向换行' }],
+
+      // Justify & Align
+      'justify-start': [{ prop: 'justify-content', val: 'flex-start', note: '主轴起点对齐' }],
+      'justify-end': [{ prop: 'justify-content', val: 'flex-end', note: '主轴终点对齐' }],
+      'justify-center': [{ prop: 'justify-content', val: 'center', note: '主轴居中对齐' }],
+      'justify-between': [{ prop: 'justify-content', val: 'space-between', note: '主轴两端对齐' }],
+      'justify-around': [{ prop: 'justify-content', val: 'space-around', note: '主轴分散对齐' }],
+      'justify-evenly': [{ prop: 'justify-content', val: 'space-evenly', note: '主轴均分对齐' }],
+
+      'items-start': [{ prop: 'align-items', val: 'flex-start', note: '交叉轴起点对齐' }],
+      'items-end': [{ prop: 'align-items', val: 'flex-end', note: '交叉轴终点对齐' }],
+      'items-center': [{ prop: 'align-items', val: 'center', note: '交叉轴居中对齐' }],
+      'items-baseline': [{ prop: 'align-items', val: 'baseline', note: '基线对齐' }],
+      'items-stretch': [{ prop: 'align-items', val: 'stretch', note: '拉伸铺满' }],
+
+      'self-auto': [{ prop: 'align-self', val: 'auto', note: '自身对齐：自动' }],
+      'self-start': [{ prop: 'align-self', val: 'flex-start', note: '自身对齐：起点' }],
+      'self-end': [{ prop: 'align-self', val: 'flex-end', note: '自身对齐：终点' }],
+      'self-center': [{ prop: 'align-self', val: 'center', note: '自身对齐：居中' }],
+      'self-stretch': [{ prop: 'align-self', val: 'stretch', note: '自身对齐：拉伸' }],
+
+      // Flex Item Sizing
+      'flex-1': [{ prop: 'flex', val: '1 1 0%', note: '弹性拉伸 (1 1 0%)' }],
+      'flex-auto': [{ prop: 'flex', val: '1 1 auto', note: '弹性自适应 (1 1 auto)' }],
+      'flex-initial': [{ prop: 'flex', val: '0 1 auto', note: '初始大小 (0 1 auto)' }],
+      'flex-none': [{ prop: 'flex', val: 'none', note: '禁止伸缩' }],
+      'flex-grow': [{ prop: 'flex-grow', val: '1', note: '允许放大' }],
+      'grow': [{ prop: 'flex-grow', val: '1', note: '允许放大' }],
+      'flex-grow-0': [{ prop: 'flex-grow', val: '0', note: '不放大' }],
+      'grow-0': [{ prop: 'flex-grow', val: '0', note: '不放大' }],
+      'flex-shrink': [{ prop: 'flex-shrink', val: '1', note: '允许缩小' }],
+      'shrink': [{ prop: 'flex-shrink', val: '1', note: '允许缩小' }],
+      'flex-shrink-0': [{ prop: 'flex-shrink', val: '0', note: '不缩小' }],
+      'shrink-0': [{ prop: 'flex-shrink', val: '0', note: '不缩小' }],
+
+      // Typography
+      'text-left': [{ prop: 'text-align', val: 'left', note: '文本左对齐' }],
+      'text-center': [{ prop: 'text-align', val: 'center', note: '文本居中' }],
+      'text-right': [{ prop: 'text-align', val: 'right', note: '文本右对齐' }],
+      'text-justify': [{ prop: 'text-align', val: 'justify', note: '文本两端对齐' }],
+
+      'text-xs': [{ prop: 'font-size', val: '12px', note: '0.75rem (12px)' }],
+      'text-sm': [{ prop: 'font-size', val: '14px', note: '0.875rem (14px)' }],
+      'text-base': [{ prop: 'font-size', val: '16px', note: '1rem (16px)' }],
+      'text-lg': [{ prop: 'font-size', val: '18px', note: '1.125rem (18px)' }],
+      'text-xl': [{ prop: 'font-size', val: '20px', note: '1.25rem (20px)' }],
+      'text-2xl': [{ prop: 'font-size', val: '24px', note: '1.5rem (24px)' }],
+      'text-3xl': [{ prop: 'font-size', val: '30px', note: '1.875rem (30px)' }],
+      'text-4xl': [{ prop: 'font-size', val: '36px', note: '2.25rem (36px)' }],
+      'text-5xl': [{ prop: 'font-size', val: '48px', note: '3rem (48px)' }],
+      'text-6xl': [{ prop: 'font-size', val: '60px', note: '3.75rem (60px)' }],
+      'text-7xl': [{ prop: 'font-size', val: '72px', note: '4.5rem (72px)' }],
+      'text-8xl': [{ prop: 'font-size', val: '96px', note: '6rem (96px)' }],
+      'text-9xl': [{ prop: 'font-size', val: '128px', note: '8rem (128px)' }],
+
+      'font-thin': [{ prop: 'font-weight', val: '100', note: 'Thin 100' }],
+      'font-extralight': [{ prop: 'font-weight', val: '200', note: 'Extra Light 200' }],
+      'font-light': [{ prop: 'font-weight', val: '300', note: 'Light 300' }],
+      'font-normal': [{ prop: 'font-weight', val: '400', note: 'Normal 400' }],
+      'font-medium': [{ prop: 'font-weight', val: '500', note: 'Medium 500' }],
+      'font-semibold': [{ prop: 'font-weight', val: '600', note: 'Semi Bold 600' }],
+      'font-bold': [{ prop: 'font-weight', val: '700', note: 'Bold 700' }],
+      'font-extrabold': [{ prop: 'font-weight', val: '800', note: 'Extra Bold 800' }],
+      'font-black': [{ prop: 'font-weight', val: '900', note: 'Black 900' }],
+
+      'italic': [{ prop: 'font-style', val: 'italic', note: '斜体' }],
+      'not-italic': [{ prop: 'font-style', val: 'normal', note: '常规非斜体' }],
+
+      'underline': [{ prop: 'text-decoration', val: 'underline', note: '下划线' }],
+      'line-through': [{ prop: 'text-decoration', val: 'line-through', note: '删除线' }],
+      'no-underline': [{ prop: 'text-decoration', val: 'none', note: '无下划线' }],
+
+      'uppercase': [{ prop: 'text-transform', val: 'uppercase', note: '全大写' }],
+      'lowercase': [{ prop: 'text-transform', val: 'lowercase', note: '全小写' }],
+      'capitalize': [{ prop: 'text-transform', val: 'capitalize', note: '首字母大写' }],
+      'normal-case': [{ prop: 'text-transform', val: 'none', note: '原始大小写' }],
+
+      'truncate': [
+        { prop: 'overflow', val: 'hidden', note: '溢出隐藏' },
+        { prop: 'text-overflow', val: 'ellipsis', note: '省略号' },
+        { prop: 'white-space', val: 'nowrap', note: '单行不换行' }
+      ],
+      'whitespace-nowrap': [{ prop: 'white-space', val: 'nowrap', note: '不换行' }],
+      'whitespace-normal': [{ prop: 'white-space', val: 'normal', note: '常规换行' }],
+      'whitespace-pre': [{ prop: 'white-space', val: 'pre', note: '保留空格与换行' }],
+      'whitespace-pre-line': [{ prop: 'white-space', val: 'pre-line', note: '保留换行' }],
+      'whitespace-pre-wrap': [{ prop: 'white-space', val: 'pre-wrap', note: '保留空格自动换行' }],
+
+      'break-all': [{ prop: 'word-break', val: 'break-all', note: '任意字符断行' }],
+      'break-words': [{ prop: 'word-break', val: 'break-word', note: '单词处断行' }],
+      'break-keep': [{ prop: 'word-break', val: 'keep-all', note: '不断行' }],
+
+      // Box Sizing & Overflow
+      'box-border': [{ prop: 'box-sizing', val: 'border-box', note: 'border-box' }],
+      'box-content': [{ prop: 'box-sizing', val: 'content-box', note: 'content-box' }],
+      'overflow-hidden': [{ prop: 'overflow', val: 'hidden', note: '隐藏溢出' }],
+      'overflow-auto': [{ prop: 'overflow', val: 'auto', note: '自动滚动' }],
+      'overflow-scroll': [{ prop: 'overflow', val: 'scroll', note: '总是滚动' }],
+      'overflow-visible': [{ prop: 'overflow', val: 'visible', note: '可见' }],
+      'overflow-x-hidden': [{ prop: 'overflow-x', val: 'hidden', note: '水平溢出隐藏' }],
+      'overflow-x-auto': [{ prop: 'overflow-x', val: 'auto', note: '水平自动滚动' }],
+      'overflow-y-hidden': [{ prop: 'overflow-y', val: 'hidden', note: '垂直溢出隐藏' }],
+      'overflow-y-auto': [{ prop: 'overflow-y', val: 'auto', note: '垂直自动滚动' }],
+
+      // Border Radius
+      'rounded-none': [{ prop: 'border-radius', val: '0px', note: '0px 无圆角' }],
+      'rounded-sm': [{ prop: 'border-radius', val: '2px', note: '2px 小圆角' }],
+      'rounded': [{ prop: 'border-radius', val: '4px', note: '4px 默认圆角' }],
+      'rounded-md': [{ prop: 'border-radius', val: '6px', note: '6px 中圆角' }],
+      'rounded-lg': [{ prop: 'border-radius', val: '8px', note: '8px 大圆角' }],
+      'rounded-xl': [{ prop: 'border-radius', val: '12px', note: '12px 特大圆角' }],
+      'rounded-2xl': [{ prop: 'border-radius', val: '16px', note: '16px 2X圆角' }],
+      'rounded-3xl': [{ prop: 'border-radius', val: '24px', note: '24px 3X圆角' }],
+      'rounded-full': [{ prop: 'border-radius', val: '9999px', note: '全胶囊/圆形' }],
+
+      // Border
+      'border': [{ prop: 'border-width', val: '1px', note: '1px 默认边框' }, { prop: 'border-style', val: 'solid', note: '实线边框' }],
+      'border-0': [{ prop: 'border-width', val: '0px', note: '无边框' }],
+      'border-2': [{ prop: 'border-width', val: '2px', note: '2px 边框' }, { prop: 'border-style', val: 'solid', note: '实线' }],
+      'border-4': [{ prop: 'border-width', val: '4px', note: '4px 边框' }, { prop: 'border-style', val: 'solid', note: '实线' }],
+      'border-8': [{ prop: 'border-width', val: '8px', note: '8px 边框' }, { prop: 'border-style', val: 'solid', note: '实线' }],
+      'border-solid': [{ prop: 'border-style', val: 'solid', note: '实线' }],
+      'border-dashed': [{ prop: 'border-style', val: 'dashed', note: '虚线' }],
+      'border-dotted': [{ prop: 'border-style', val: 'dotted', note: '点线' }],
+      'border-none': [{ prop: 'border-style', val: 'none', note: '无边框' }],
+
+      // Shadows
+      'shadow-none': [{ prop: 'box-shadow', val: 'none', note: '无阴影' }],
+      'shadow-sm': [{ prop: 'box-shadow', val: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', note: '微小阴影' }],
+      'shadow': [{ prop: 'box-shadow', val: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', note: '基础阴影' }],
+      'shadow-md': [{ prop: 'box-shadow', val: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', note: '中等阴影' }],
+      'shadow-lg': [{ prop: 'box-shadow', val: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', note: '大阴影' }],
+      'shadow-xl': [{ prop: 'box-shadow', val: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', note: '超大阴影' }],
+      'shadow-2xl': [{ prop: 'box-shadow', val: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', note: '特大阴影' }],
+      'shadow-inner': [{ prop: 'box-shadow', val: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)', note: '内阴影' }],
+
+      // Misc
+      'cursor-pointer': [{ prop: 'cursor', val: 'pointer', note: '指针手指' }],
+      'cursor-default': [{ prop: 'cursor', val: 'default', note: '默认指针' }],
+      'cursor-not-allowed': [{ prop: 'cursor', val: 'not-allowed', note: '禁用标志' }],
+      'cursor-move': [{ prop: 'cursor', val: 'move', note: '移动指针' }],
+      'cursor-text': [{ prop: 'cursor', val: 'text', note: '文本选择' }],
+      'select-none': [{ prop: 'user-select', val: 'none', note: '禁止选中文本' }],
+      'select-text': [{ prop: 'user-select', val: 'text', note: '允许选中' }],
+      'select-all': [{ prop: 'user-select', val: 'all', note: '点击全选' }],
+      'pointer-events-none': [{ prop: 'pointer-events', val: 'none', note: '忽略点击事件' }],
+      'pointer-events-auto': [{ prop: 'pointer-events', val: 'auto', note: '接收点击事件' }],
+      'visible': [{ prop: 'visibility', val: 'visible', note: '可见' }],
+      'invisible': [{ prop: 'visibility', val: 'hidden', note: '隐藏占位' }],
+
+      // Transitions
+      'transition': [{ prop: 'transition', val: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)', note: '默认平滑过渡' }],
+      'transition-all': [{ prop: 'transition-property', val: 'all', note: '全部属性过渡' }, { prop: 'transition-timing-function', val: 'cubic-bezier(0.4, 0, 0.2, 1)', note: '缓动函数' }, { prop: 'transition-duration', val: '150ms', note: '默认持续 150ms' }],
+      'transition-colors': [{ prop: 'transition-property', val: 'background-color, border-color, color, fill, stroke', note: '颜色过渡' }],
+      'transition-opacity': [{ prop: 'transition-property', val: 'opacity', note: '透明度过渡' }],
+      'transition-transform': [{ prop: 'transition-property', val: 'transform', note: '变换过渡' }],
+      'transition-none': [{ prop: 'transition', val: 'none', note: '无过渡' }],
+
+      'outline-none': [{ prop: 'outline', val: '2px solid transparent', note: '无聚焦外轮廓' }, { prop: 'outline-offset', val: '2px', note: '轮廓偏移' }],
+      'outline': [{ prop: 'outline-style', val: 'solid', note: '实线轮廓' }],
+
+      'scale-0': [{ prop: 'transform', val: 'scale(0)', note: '缩放 0' }],
+      'scale-50': [{ prop: 'transform', val: 'scale(0.5)', note: '缩放 50%' }],
+      'scale-75': [{ prop: 'transform', val: 'scale(0.75)', note: '缩放 75%' }],
+      'scale-90': [{ prop: 'transform', val: 'scale(0.9)', note: '缩放 90%' }],
+      'scale-95': [{ prop: 'transform', val: 'scale(0.95)', note: '缩放 95%' }],
+      'scale-100': [{ prop: 'transform', val: 'scale(1)', note: '缩放 100%' }],
+      'scale-105': [{ prop: 'transform', val: 'scale(1.05)', note: '缩放 105%' }],
+      'scale-110': [{ prop: 'transform', val: 'scale(1.1)', note: '缩放 110%' }],
+      'scale-125': [{ prop: 'transform', val: 'scale(1.25)', note: '缩放 125%' }],
+      'scale-150': [{ prop: 'transform', val: 'scale(1.5)', note: '缩放 150%' }],
+
+      'rotate-0': [{ prop: 'transform', val: 'rotate(0deg)', note: '旋转 0度' }],
+      'rotate-45': [{ prop: 'transform', val: 'rotate(45deg)', note: '旋转 45度' }],
+      'rotate-90': [{ prop: 'transform', val: 'rotate(90deg)', note: '旋转 90度' }],
+      'rotate-180': [{ prop: 'transform', val: 'rotate(180deg)', note: '旋转 180度' }],
+
+      'ease-linear': [{ prop: 'transition-timing-function', val: 'linear', note: '匀速' }],
+      'ease-in': [{ prop: 'transition-timing-function', val: 'cubic-bezier(0.4, 0, 1, 1)', note: '慢速进入' }],
+      'ease-out': [{ prop: 'transition-timing-function', val: 'cubic-bezier(0, 0, 0.2, 1)', note: '慢速退出' }],
+      'ease-in-out': [{ prop: 'transition-timing-function', val: 'cubic-bezier(0.4, 0, 0.2, 1)', note: '慢入慢出' }],
+
+      'bg-cover': [{ prop: 'background-size', val: 'cover', note: '背景覆盖铺满' }],
+      'bg-contain': [{ prop: 'background-size', val: 'contain', note: '背景完整包含' }],
+      'bg-auto': [{ prop: 'background-size', val: 'auto', note: '背景自适应尺寸' }],
+      'bg-center': [{ prop: 'background-position', val: 'center', note: '背景居中' }],
+      'bg-no-repeat': [{ prop: 'background-repeat', val: 'no-repeat', note: '背景不重复' }],
+      'bg-repeat': [{ prop: 'background-repeat', val: 'repeat', note: '背景平铺重复' }],
+      'bg-none': [{ prop: 'background-image', val: 'none', note: '无背景图' }]
+    };
+
+    // ==========================================
+    // 2. 动态类名解析引擎
+    // ==========================================
+
+    // 解码任意值中的下划线为空格
+    function decodeArbitrary(val) {
+      return val.replace(/_/g, ' ');
+    }
+
+    // 解析尺寸/间距值 (支持比例尺和任意值)
+    function parseDimensionValue(valStr) {
+      if (valStr.startsWith('[') && valStr.endsWith(']')) {
+        return decodeArbitrary(valStr.slice(1, -1));
+      }
+      if (valStr === 'full') return '100%';
+      if (valStr === 'screen') return '100vw'; // 或 100vh 依据上下文
+      if (valStr === 'auto') return 'auto';
+      if (valStr === 'min') return 'min-content';
+      if (valStr === 'max') return 'max-content';
+      if (valStr === 'fit') return 'fit-content';
+      if (valStr === '1/2') return '50%';
+      if (valStr === '1/3') return '33.333333%';
+      if (valStr === '2/3') return '66.666667%';
+      if (valStr === '1/4') return '25%';
+      if (valStr === '2/4') return '50%';
+      if (valStr === '3/4') return '75%';
+
+      if (scaleToPx[valStr]) {
+        return scaleToPx[valStr];
+      }
+      return valStr;
+    }
+
+    // 解析颜色值
+    function parseColorValue(colStr) {
+      if (colStr.startsWith('[') && colStr.endsWith(']')) {
+        return decodeArbitrary(colStr.slice(1, -1));
+      }
+      if (colorPalette[colStr]) {
+        return colorPalette[colStr];
+      }
+      return colStr;
+    }
+
+    // 将单条 Windi 类名翻译为 CSS 声明
+    function translateSingleClass(cls) {
+      cls = cls.trim();
+      if (!cls) return [];
+
+      // 1. 静态映射表
+      if (staticClassMap[cls]) {
+        return staticClassMap[cls];
+      }
+
+      // 2. 任意属性语法 [prop:value]
+      if (cls.startsWith('[') && cls.endsWith(']') && cls.includes(':')) {
+        const inner = cls.slice(1, -1);
+        const cIdx = inner.indexOf(':');
+        const p = inner.substring(0, cIdx).trim();
+        const v = decodeArbitrary(inner.substring(cIdx + 1).trim());
+        return [{ prop: p, val: v, note: 'WindiCSS 任意属性语法' }];
+      }
+
+      // 3. 尺寸与间距相关 (Width / Height / Min / Max)
+      let m;
+      if ((m = cls.match(/^w-(.+)$/))) {
+        const v = m[1] === 'screen' ? '100vw' : parseDimensionValue(m[1]);
+        return [{ prop: 'width', val: v, note: `宽度 ${v}` }];
+      }
+      if ((m = cls.match(/^min-w-(.+)$/))) {
+        const v = parseDimensionValue(m[1]);
+        return [{ prop: 'min-width', val: v, note: `最小宽度 ${v}` }];
+      }
+      if ((m = cls.match(/^max-w-(.+)$/))) {
+        const maxMap = { 'xs': '20rem', 'sm': '24rem', 'md': '28rem', 'lg': '32rem', 'xl': '36rem', '2xl': '42rem', '3xl': '48rem', '4xl': '56rem', '5xl': '64rem', '6xl': '72rem', '7xl': '80rem', 'full': '100%', 'none': 'none' };
+        const v = maxMap[m[1]] || parseDimensionValue(m[1]);
+        return [{ prop: 'max-width', val: v, note: `最大宽度 ${v}` }];
+      }
+      if ((m = cls.match(/^h-(.+)$/))) {
+        const v = m[1] === 'screen' ? '100vh' : parseDimensionValue(m[1]);
+        return [{ prop: 'height', val: v, note: `高度 ${v}` }];
+      }
+      if ((m = cls.match(/^min-h-(.+)$/))) {
+        const v = m[1] === 'screen' ? '100vh' : parseDimensionValue(m[1]);
+        return [{ prop: 'min-height', val: v, note: `最小高度 ${v}` }];
+      }
+      if ((m = cls.match(/^max-h-(.+)$/))) {
+        const v = m[1] === 'screen' ? '100vh' : parseDimensionValue(m[1]);
+        return [{ prop: 'max-height', val: v, note: `最大高度 ${v}` }];
+      }
+
+      // 4. Padding
+      if ((m = cls.match(/^p-(.+)$/))) {
+        const v = parseDimensionValue(m[1]);
+        return [{ prop: 'padding', val: v, note: `全方向内边距 ${v}` }];
+      }
+      if ((m = cls.match(/^px-(.+)$/))) {
+        const v = parseDimensionValue(m[1]);
+        return [
+          { prop: 'padding-left', val: v, note: `左内边距 ${v}` },
+          { prop: 'padding-right', val: v, note: `右内边距 ${v}` }
+        ];
+      }
+      if ((m = cls.match(/^py-(.+)$/))) {
+        const v = parseDimensionValue(m[1]);
+        return [
+          { prop: 'padding-top', val: v, note: `上内边距 ${v}` },
+          { prop: 'padding-bottom', val: v, note: `下内边距 ${v}` }
+        ];
+      }
+      if ((m = cls.match(/^pt-(.+)$/))) return [{ prop: 'padding-top', val: parseDimensionValue(m[1]), note: `上内边距` }];
+      if ((m = cls.match(/^pb-(.+)$/))) return [{ prop: 'padding-bottom', val: parseDimensionValue(m[1]), note: `下内边距` }];
+      if ((m = cls.match(/^pl-(.+)$/))) return [{ prop: 'padding-left', val: parseDimensionValue(m[1]), note: `左内边距` }];
+      if ((m = cls.match(/^pr-(.+)$/))) return [{ prop: 'padding-right', val: parseDimensionValue(m[1]), note: `右内边距` }];
+
+      // 5. Margin (含负数 -m-*)
+      const isNegativeMargin = cls.startsWith('-');
+      const cleanMarginCls = isNegativeMargin ? cls.substring(1) : cls;
+
+      if ((m = cleanMarginCls.match(/^m-(.+)$/))) {
+        let v = parseDimensionValue(m[1]);
+        if (isNegativeMargin && v !== '0px' && v !== 'auto') v = `-${v}`;
+        return [{ prop: 'margin', val: v, note: `全方向外边距 ${v}` }];
+      }
+      if ((m = cleanMarginCls.match(/^mx-(.+)$/))) {
+        let v = parseDimensionValue(m[1]);
+        if (isNegativeMargin && v !== '0px' && v !== 'auto') v = `-${v}`;
+        return [
+          { prop: 'margin-left', val: v, note: `左外边距 ${v}` },
+          { prop: 'margin-right', val: v, note: `右外边距 ${v}` }
+        ];
+      }
+      if ((m = cleanMarginCls.match(/^my-(.+)$/))) {
+        let v = parseDimensionValue(m[1]);
+        if (isNegativeMargin && v !== '0px' && v !== 'auto') v = `-${v}`;
+        return [
+          { prop: 'margin-top', val: v, note: `上外边距 ${v}` },
+          { prop: 'margin-bottom', val: v, note: `下外边距 ${v}` }
+        ];
+      }
+      if ((m = cleanMarginCls.match(/^mt-(.+)$/))) {
+        let v = parseDimensionValue(m[1]);
+        if (isNegativeMargin && v !== '0px' && v !== 'auto') v = `-${v}`;
+        return [{ prop: 'margin-top', val: v, note: `上外边距 ${v}` }];
+      }
+      if ((m = cleanMarginCls.match(/^mb-(.+)$/))) {
+        let v = parseDimensionValue(m[1]);
+        if (isNegativeMargin && v !== '0px' && v !== 'auto') v = `-${v}`;
+        return [{ prop: 'margin-bottom', val: v, note: `下外边距 ${v}` }];
+      }
+      if ((m = cleanMarginCls.match(/^ml-(.+)$/))) {
+        let v = parseDimensionValue(m[1]);
+        if (isNegativeMargin && v !== '0px' && v !== 'auto') v = `-${v}`;
+        return [{ prop: 'margin-left', val: v, note: `左外边距 ${v}` }];
+      }
+      if ((m = cleanMarginCls.match(/^mr-(.+)$/))) {
+        let v = parseDimensionValue(m[1]);
+        if (isNegativeMargin && v !== '0px' && v !== 'auto') v = `-${v}`;
+        return [{ prop: 'margin-right', val: v, note: `右外边距 ${v}` }];
+      }
+
+      // 6. 定位坐标 (top, bottom, left, right, inset, z-index)
+      if ((m = cls.match(/^(top|bottom|left|right|inset)-(.+)$/))) {
+        const dir = m[1];
+        const v = parseDimensionValue(m[2]);
+        return [{ prop: dir, val: v, note: `定位 ${dir}: ${v}` }];
+      }
+      if ((m = cls.match(/^z-(.+)$/))) {
+        const v = m[1].startsWith('[') ? m[1].slice(1, -1) : m[1];
+        return [{ prop: 'z-index', val: v, note: `层级 z-index: ${v}` }];
+      }
+
+      // 7. Gap
+      if ((m = cls.match(/^gap-(.+)$/))) {
+        const v = parseDimensionValue(m[1]);
+        return [{ prop: 'gap', val: v, note: `间隙 gap: ${v}` }];
+      }
+      if ((m = cls.match(/^gap-x-(.+)$/))) {
+        const v = parseDimensionValue(m[1]);
+        return [{ prop: 'column-gap', val: v, note: `列间隙 ${v}` }];
+      }
+      if ((m = cls.match(/^gap-y-(.+)$/))) {
+        const v = parseDimensionValue(m[1]);
+        return [{ prop: 'row-gap', val: v, note: `行间隙 ${v}` }];
+      }
+
+      // 8. Grid 布局
+      if ((m = cls.match(/^grid-cols-(\d+)$/))) {
+        return [{ prop: 'grid-template-columns', val: `repeat(${m[1]}, minmax(0, 1fr))`, note: `${m[1]} 列等分网格` }];
+      }
+      if ((m = cls.match(/^grid-cols-\[(.+)\]$/))) {
+        return [{ prop: 'grid-template-columns', val: decodeArbitrary(m[1]), note: `网格列任意值` }];
+      }
+      if ((m = cls.match(/^col-span-(\d+)$/))) {
+        return [{ prop: 'grid-column', val: `span ${m[1]} / span ${m[1]}`, note: `跨 ${m[1]} 列` }];
+      }
+      if (cls === 'col-span-full') {
+        return [{ prop: 'grid-column', val: '1 / -1', note: '跨满全部网格列' }];
+      }
+
+      // 9. 颜色与背景 (text-*, bg-*, border-*)
+      if ((m = cls.match(/^text-\[(.+)\]$/))) {
+        return [{ prop: 'color', val: decodeArbitrary(m[1]), note: `自定义文字颜色` }];
+      }
+      if ((m = cls.match(/^text-([a-z]+-\d+|[a-z]+)$/))) {
+        const col = parseColorValue(m[1]);
+        if (col) return [{ prop: 'color', val: col, note: `文字颜色 ${m[1]}` }];
+      }
+
+      if ((m = cls.match(/^bg-\[(.+)\]$/))) {
+        const v = decodeArbitrary(m[1]);
+        return [{ prop: v.startsWith('linear') || v.startsWith('radial') ? 'background-image' : 'background-color', val: v, note: `自定义背景` }];
+      }
+      if ((m = cls.match(/^bg-([a-z]+-\d+|[a-z]+)$/))) {
+        const col = parseColorValue(m[1]);
+        if (col) return [{ prop: 'background-color', val: col, note: `背景色 ${m[1]}` }];
+      }
+
+      if ((m = cls.match(/^border-\[(.+)\]$/))) {
+        const v = decodeArbitrary(m[1]);
+        if (/^\d+(px|rem|em)?$/.test(v)) {
+          return [{ prop: 'border-width', val: v, note: `边框宽度 ${v}` }, { prop: 'border-style', val: 'solid', note: '实线' }];
+        }
+        return [{ prop: 'border-color', val: v, note: `边框颜色 ${v}` }];
+      }
+      if ((m = cls.match(/^border-([a-z]+-\d+|[a-z]+)$/))) {
+        const col = parseColorValue(m[1]);
+        if (col) return [{ prop: 'border-color', val: col, note: `边框颜色 ${m[1]}` }];
+      }
+
+      // 10. 圆角 (rounded-*)
+      if ((m = cls.match(/^rounded-\[(.+)\]$/))) {
+        return [{ prop: 'border-radius', val: decodeArbitrary(m[1]), note: `圆角 ${m[1]}` }];
+      }
+      if ((m = cls.match(/^rounded-(t|b|l|r|tl|tr|bl|br)-\[(.+)\]$/))) {
+        const cornerProps = {
+          't': ['border-top-left-radius', 'border-top-right-radius'],
+          'b': ['border-bottom-left-radius', 'border-bottom-right-radius'],
+          'l': ['border-top-left-radius', 'border-bottom-left-radius'],
+          'r': ['border-top-right-radius', 'border-bottom-right-radius'],
+          'tl': ['border-top-left-radius'],
+          'tr': ['border-top-right-radius'],
+          'bl': ['border-bottom-left-radius'],
+          'br': ['border-bottom-right-radius']
+        };
+        const props = cornerProps[m[1]] || ['border-radius'];
+        const val = decodeArbitrary(m[2]);
+        return props.map(p => ({ prop: p, val, note: `单角圆角 ${val}` }));
+      }
+      if ((m = cls.match(/^rounded-(t|b|l|r|tl|tr|bl|br)-([a-z0-9]+)$/))) {
+        const cornerProps = {
+          't': ['border-top-left-radius', 'border-top-right-radius'],
+          'b': ['border-bottom-left-radius', 'border-bottom-right-radius'],
+          'l': ['border-top-left-radius', 'border-bottom-left-radius'],
+          'r': ['border-top-right-radius', 'border-bottom-right-radius'],
+          'tl': ['border-top-left-radius'],
+          'tr': ['border-top-right-radius'],
+          'bl': ['border-bottom-left-radius'],
+          'br': ['border-bottom-right-radius']
+        };
+        const radMap = { 'none': '0px', 'sm': '2px', 'md': '6px', 'lg': '8px', 'xl': '12px', '2xl': '16px', '3xl': '24px', 'full': '9999px' };
+        const props = cornerProps[m[1]] || ['border-radius'];
+        const val = radMap[m[2]] || '4px';
+        return props.map(p => ({ prop: p, val, note: `局部圆角 ${val}` }));
+      }
+
+      // 11. 行高与字间距 (leading-*, tracking-*)
+      if ((m = cls.match(/^leading-(none|tight|snug|normal|relaxed|loose|\d+|\d+\.\d+|\[.+\])$/))) {
+        const lhMap = { 'none': '1', 'tight': '1.25', 'snug': '1.375', 'normal': '1.5', 'relaxed': '1.625', 'loose': '2' };
+        const val = lhMap[m[1]] || (m[1].startsWith('[') ? decodeArbitrary(m[1].slice(1, -1)) : parseDimensionValue(m[1]));
+        return [{ prop: 'line-height', val, note: `行高 ${val}` }];
+      }
+      if ((m = cls.match(/^tracking-(tighter|tight|normal|wide|wider|widest|\[.+\])$/))) {
+        const lsMap = { 'tighter': '-0.05em', 'tight': '-0.025em', 'normal': '0em', 'wide': '0.025em', 'wider': '0.05em', 'widest': '0.1em' };
+        const val = lsMap[m[1]] || decodeArbitrary(m[1].slice(1, -1));
+        return [{ prop: 'letter-spacing', val, note: `字间距 ${val}` }];
+      }
+
+      // 12. 阴影与透明度 (shadow-*, opacity-*)
+      if ((m = cls.match(/^shadow-\[(.+)\]$/))) {
+        return [{ prop: 'box-shadow', val: decodeArbitrary(m[1]), note: `自定义阴影` }];
+      }
+      if ((m = cls.match(/^opacity-(\d+|\[.+\])$/))) {
+        const val = m[1].startsWith('[') ? decodeArbitrary(m[1].slice(1, -1)) : `${parseInt(m[1], 10) / 100}`;
+        return [{ prop: 'opacity', val, note: `不透明度 ${val}` }];
+      }
+
+      // 13. 过渡持续时间 (duration-*)
+      if ((m = cls.match(/^duration-(\d+|\[.+\])$/))) {
+        const val = m[1].startsWith('[') ? decodeArbitrary(m[1].slice(1, -1)) : `${m[1]}ms`;
+        return [{ prop: 'transition-duration', val, note: `过渡时间 ${val}` }];
+      }
+
+      // 14. 毛玻璃 (backdrop-blur-*)
+      if ((m = cls.match(/^backdrop-blur-(sm|md|lg|xl|2xl|\[.+\])$/))) {
+        const bmap = { 'sm': '4px', 'md': '8px', 'lg': '12px', 'xl': '16px', '2xl': '24px' };
+        const val = bmap[m[1]] || decodeArbitrary(m[1].slice(1, -1));
+        return [
+          { prop: 'backdrop-filter', val: `blur(${val})`, note: `毛玻璃模糊 ${val}` },
+          { prop: '-webkit-backdrop-filter', val: `blur(${val})`, note: `Safari 兼容` }
+        ];
+      }
+
+      return [{ prop: `/* ${cls} */`, val: '/* 未知或复合属性 */', note: '未能完全匹配的类名' }];
+    }
+
+    // 解析类名列表（支持展开组语法和变体前缀）
+    function parseClassInput(inputText) {
+      // 1. 如果包含 class="..." 或 className="..."，提取其中的字符串
+      let raw = inputText;
+      const classAttrMatch = raw.match(/class(?:Name)?=["'`]([^"'`]+)["'`]/g);
+      if (classAttrMatch) {
+        raw = classAttrMatch.map(m => m.replace(/class(?:Name)?=["'`]([^"'`]+)["'`]/, '$1')).join(' ');
+      }
+
+      // 2. 展开 WindiCSS 组语法：hover:(bg-blue-500 text-white) -> hover:bg-blue-500 hover:text-white
+      raw = raw.replace(/([a-zA-Z0-9_-]+):\(([^)]+)\)/g, (match, prefix, group) => {
+        return group.split(/\s+/).filter(Boolean).map(item => `${prefix}:${item}`).join(' ');
+      });
+
+      const tokens = raw.split(/[\s,]+/).map(t => t.trim()).filter(Boolean);
+      const items = [];
+
+      for (const token of tokens) {
+        // 检查变体前缀，如 hover:bg-blue-500, md:flex, dark:text-white
+        const parts = token.split(':');
+        let variant = '';
+        let baseClass = token;
+        if (parts.length > 1) {
+          variant = parts.slice(0, -1).join(':');
+          baseClass = parts[parts.length - 1];
+        }
+
+        const decls = translateSingleClass(baseClass);
+        items.push({
+          rawClass: token,
+          variant,
+          baseClass,
+          declarations: decls
+        });
+      }
+
+      return items;
+    }
+
+    // ==========================================
+    // 3. UI 交互与渲染
+    // ==========================================
+    let currentFormat = 'standard';
+    let parsedData = [];
+
+    const windiInput = document.getElementById('windiInput');
+    const selectorInput = document.getElementById('selectorInput');
+    const outputBox = document.getElementById('outputBox');
+    const breakdownTbody = document.getElementById('breakdownTbody');
+    const classCountBadge = document.getElementById('classCountBadge');
+    const previewTarget = document.getElementById('previewTarget');
+    const toast = document.getElementById('toast');
+
+    function convert() {
+      const text = windiInput.value;
+      parsedData = parseClassInput(text);
+      classCountBadge.textContent = `${parsedData.length} 个类名`;
+
+      if (parsedData.length === 0) {
+        outputBox.className = 'output-box empty';
+        outputBox.textContent = '转换后的 CSS 代码将显示在这里...';
+        breakdownTbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #94a3b8; padding: 24px;">暂无转换数据</td></tr>`;
+        previewTarget.style.cssText = '';
+        return;
+      }
+
+      // 1. 生成 CSS 文本
+      renderCssOutput();
+
+      // 2. 渲染对照表格
+      renderBreakdownTable();
+
+      // 3. 渲染实时预览效果 (应用 base 规则及交互伪类)
+      let previewStyles = '';
+      let previewHoverStyles = '';
+      let previewActiveStyles = '';
+
+      parsedData.forEach(item => {
+        if (!item.variant) {
+          item.declarations.forEach(d => {
+            if (!d.prop.startsWith('/*')) previewStyles += `${d.prop}: ${d.val}; `;
+          });
+        } else if (item.variant === 'hover') {
+          item.declarations.forEach(d => {
+            if (!d.prop.startsWith('/*')) previewHoverStyles += `${d.prop}: ${d.val} !important; `;
+          });
+        } else if (item.variant === 'active') {
+          item.declarations.forEach(d => {
+            if (!d.prop.startsWith('/*')) previewActiveStyles += `${d.prop}: ${d.val} !important; `;
+          });
+        }
+      });
+
+      try {
+        previewTarget.style.cssText = previewStyles;
+        const dynamicStyle = document.getElementById('dynamicPreviewStyle');
+        if (dynamicStyle) {
+          dynamicStyle.textContent = `
+            #previewTarget:hover { ${previewHoverStyles} }
+            #previewTarget:active { ${previewActiveStyles} }
+          `;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderCssOutput() {
+      const selector = selectorInput.value.trim() || '.custom-box';
+      outputBox.className = 'output-box';
+
+      // 按变体分组: base, hover, focus, active, disabled, dark, sm/md/lg/xl 媒体查询
+      const groups = {
+        base: [],
+        hover: [],
+        focus: [],
+        active: [],
+        disabled: [],
+        dark: [],
+        media: {} // md, lg etc.
+      };
+
+      parsedData.forEach(item => {
+        const v = item.variant;
+        if (!v) {
+          groups.base.push(...item.declarations);
+        } else if (v === 'hover') {
+          groups.hover.push(...item.declarations);
+        } else if (v === 'focus') {
+          groups.focus.push(...item.declarations);
+        } else if (v === 'active') {
+          groups.active.push(...item.declarations);
+        } else if (v === 'disabled') {
+          groups.disabled.push(...item.declarations);
+        } else if (v === 'dark') {
+          groups.dark.push(...item.declarations);
+        } else if (['sm', 'md', 'lg', 'xl', '2xl'].includes(v)) {
+          if (!groups.media[v]) groups.media[v] = [];
+          groups.media[v].push(...item.declarations);
+        } else {
+          groups.base.push(...item.declarations);
+        }
+      });
+
+      const mediaBreakpoints = {
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl': '1536px'
+      };
+
+      if (currentFormat === 'inline') {
+        // 内联样式模式（仅 base 属性）
+        const lines = groups.base.map(d => `${d.prop}: ${d.val};`).join(' ');
+        outputBox.textContent = `style="${lines}"`;
+        return;
+      }
+
+      if (currentFormat === 'scss') {
+        // SCSS 嵌套模式
+        let scss = `${selector} {\n`;
+        groups.base.forEach(d => {
+          scss += `  ${d.prop}: ${d.val};\n`;
+        });
+        if (groups.hover.length > 0) {
+          scss += `\n  &:hover {\n`;
+          groups.hover.forEach(d => { scss += `    ${d.prop}: ${d.val};\n`; });
+          scss += `  }\n`;
+        }
+        if (groups.focus.length > 0) {
+          scss += `\n  &:focus {\n`;
+          groups.focus.forEach(d => { scss += `    ${d.prop}: ${d.val};\n`; });
+          scss += `  }\n`;
+        }
+        if (groups.active.length > 0) {
+          scss += `\n  &:active {\n`;
+          groups.active.forEach(d => { scss += `    ${d.prop}: ${d.val};\n`; });
+          scss += `  }\n`;
+        }
+        if (groups.disabled.length > 0) {
+          scss += `\n  &:disabled {\n`;
+          groups.disabled.forEach(d => { scss += `    ${d.prop}: ${d.val};\n`; });
+          scss += `  }\n`;
+        }
+        scss += `}`;
+
+        // 附加媒体查询
+        Object.keys(groups.media).forEach(bp => {
+          const minW = mediaBreakpoints[bp] || '768px';
+          scss += `\n\n@media (min-width: ${minW}) {\n  ${selector} {\n`;
+          groups.media[bp].forEach(d => { scss += `    ${d.prop}: ${d.val};\n`; });
+          scss += `  }\n}`;
+        });
+
+        outputBox.textContent = scss;
+        return;
+      }
+
+      // 标准 CSS 规则
+      let css = `${selector} {\n`;
+      groups.base.forEach(d => {
+        css += `  ${d.prop}: ${d.val};\n`;
+      });
+      css += `}`;
+
+      if (groups.hover.length > 0) {
+        css += `\n\n${selector}:hover {\n`;
+        groups.hover.forEach(d => { css += `  ${d.prop}: ${d.val};\n`; });
+        css += `}`;
+      }
+      if (groups.focus.length > 0) {
+        css += `\n\n${selector}:focus {\n`;
+        groups.focus.forEach(d => { css += `  ${d.prop}: ${d.val};\n`; });
+        css += `}`;
+      }
+      if (groups.active.length > 0) {
+        css += `\n\n${selector}:active {\n`;
+        groups.active.forEach(d => { css += `  ${d.prop}: ${d.val};\n`; });
+        css += `}`;
+      }
+      if (groups.disabled.length > 0) {
+        css += `\n\n${selector}:disabled {\n`;
+        groups.disabled.forEach(d => { css += `  ${d.prop}: ${d.val};\n`; });
+        css += `}`;
+      }
+      if (groups.dark.length > 0) {
+        css += `\n\n.dark ${selector} {\n`;
+        groups.dark.forEach(d => { css += `  ${d.prop}: ${d.val};\n`; });
+        css += `}`;
+      }
+
+      Object.keys(groups.media).forEach(bp => {
+        const minW = mediaBreakpoints[bp] || '768px';
+        css += `\n\n@media (min-width: ${minW}) {\n  ${selector} {\n`;
+        groups.media[bp].forEach(d => { css += `    ${d.prop}: ${d.val};\n`; });
+        css += `  }\n}`;
+      });
+
+      outputBox.textContent = css;
+    }
+
+    function renderBreakdownTable() {
+      const rows = [];
+      parsedData.forEach(item => {
+        const variantBadge = item.variant ? `<span class="td-variant">${escapeHtml(item.variant)}:</span>` : '';
+        item.declarations.forEach(d => {
+          rows.push(`
+            <tr>
+              <td class="td-windi">${variantBadge}${escapeHtml(item.rawClass)}</td>
+              <td class="td-css">${escapeHtml(d.prop)}: ${escapeHtml(d.val)};</td>
+              <td class="td-note">${escapeHtml(d.note || '-')}</td>
+            </tr>
+          `);
+        });
+      });
+      breakdownTbody.innerHTML = rows.join('');
+    }
+
+    function setFormat(fmt) {
+      currentFormat = fmt;
+      document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      renderCssOutput();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function clearInput() {
+      windiInput.value = '';
+      convert();
+      windiInput.focus();
+    }
+
+    function cleanAndExtractClasses() {
+      if (parsedData.length === 0) return;
+      windiInput.value = parsedData.map(item => item.rawClass).join(' ');
+      convert();
+    }
+
+    // 预设示例
+    const presets = {
+      flexCenter: `flex items-center justify-center p-6 bg-white rounded-xl shadow-lg w-[280px] text-gray-800 text-sm font-semibold`,
+      hoverBtn: `inline-flex items-center justify-center px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white text-sm font-medium rounded-lg shadow-md cursor-pointer transition-all duration-200 select-none focus:outline-none`,
+      badge: `inline-block px-2.5 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-full`,
+      glass: `w-[260px] p-6 bg-[rgba(255,255,255,0.6)] backdrop-blur-md border border-[rgba(255,255,255,0.4)] rounded-2xl shadow-xl text-gray-700 text-sm`,
+      responsive: `flex flex-col md:flex-row items-center justify-between p-4 bg-gray-50 md:bg-white rounded-lg shadow`
+    };
+
+    function loadPreset(key) {
+      if (presets[key]) {
+        windiInput.value = presets[key];
+        convert();
+      }
+    }
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+
+    function copyResult() {
+      if (parsedData.length === 0) {
+        showToast('请先输入有效的类名！');
+        return;
+      }
+      const text = outputBox.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('已成功复制 CSS 到剪贴板 ✓');
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('已成功复制 CSS 到剪贴板 ✓');
+      });
+    }
+
+    windiInput.addEventListener('input', convert);
+    convert();
+  </script>
+</body>
+</html>

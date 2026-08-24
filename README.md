@@ -24,8 +24,10 @@
 │   └── index.html          # CSS 阴影生成器
 ├── svgCompressor/
 │   └── index.html          # SVG 压缩工具
-└── cssToWindi/
-    └── index.html          # CSS 转 WindiCSS 类名工具
+├── cssToWindi/
+│   └── index.html          # CSS 转 WindiCSS 类名工具
+└── windiToCss/
+    └── index.html          # WindiCSS 转 CSS 样式工具
 ```
 
 ## 使用方法
@@ -119,6 +121,17 @@
 - 提供属性逐条转换对照表及换算原理解析，辅助快速上手 WindiCSS。
 - 支持纯类名、`class="..."`、`className="..."` 多种输出格式切换与一键复制。
 - 内置经典样式模板（Flex居中、主按钮、徽章、毛玻璃、Grid网格、输入框、导航栏、渐变按钮、头像、大标题、禁用按钮）与实时渲染预览。
+
+### 10. WindiCSS 转 CSS
+
+将 WindiCSS / Tailwind 原子类名快速还原为原生 CSS 样式规则。
+
+- 支持纯类名、HTML 标签片段（`<div class="...">`）及 WindiCSS 组语法（`hover:(...)`）自动提取与展开。
+- 支持布局、尺寸单位还原（`p-4` -> `padding: 16px;`）、任意值（`w-[150px]` -> `width: 150px;`）、文本、颜色、边框、阴影、毛玻璃等。
+- 智能识别伪类变体（`hover:`, `focus:`, `active:`, `disabled:`）及响应式断点（`md:`, `lg:`），自动生成结构化规则与 `@media` 查询。
+- 提供标准 CSS 规则（支持自定义选择器名）、内联 `style="..."` 及 SCSS 嵌套三种格式一键切换。
+- 提供属性逐条反查明细对照表与实时渲染预览。
+- 内置经典常用模板（Flex 居中卡片、交互按钮、徽章 Tag、毛玻璃特效、响应式布局）。
 
 ## 如何新增工具
 
